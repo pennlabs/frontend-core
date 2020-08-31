@@ -4,14 +4,16 @@ import {
   Identifier,
   mutateResourceFunction,
   mutateResourceListFunction,
+  useResourceListResponse,
+  useResourceResponse,
 } from "./types";
 import { doApiRequest } from "./utils";
 
-export function useResource<R extends Identifiable>(
+export function useResource<R>(
   url: string,
   initialData?: R,
   config?: ConfigInterface<R>
-): [R | undefined, any, boolean, mutateResourceFunction<R>] {
+): useResourceResponse<R> {
   const { data, error, isValidating, mutate } = useSWR(url, {
     initialData,
     ...config,
@@ -34,7 +36,7 @@ export function useResource<R extends Identifiable>(
     if (revalidate) return mutate();
     else return new Promise<R>(() => {});
   };
-  return [data, error, isValidating, mutateWithAPI];
+  return { data, error, isValidating, mutate: mutateWithAPI };
 }
 
 /**
@@ -68,7 +70,7 @@ export function useResourceList<R extends Identifiable>(
   getResourceUrl: (id: Identifier) => string,
   initialData?: R[],
   config?: ConfigInterface<R[]>
-): [R[] | undefined, any, boolean, mutateResourceListFunction<R>] {
+): useResourceListResponse<R> {
   const { data, error, isValidating, mutate } = useSWR(listUrl, {
     initialData,
     ...config,
@@ -103,5 +105,5 @@ export function useResourceList<R extends Identifiable>(
     if (revalidate) return mutate();
     else return new Promise<R[]>(() => {});
   };
-  return [data, error, isValidating, mutateWithAPI];
+  return { data, error, isValidating, mutate: mutateWithAPI };
 }
