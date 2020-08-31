@@ -2,10 +2,12 @@ import useSWR, { ConfigInterface } from "swr";
 import {
   Identifiable,
   Identifier,
+  mutateResourceListOptions,
+  mutateResourceOptions,
   useResourceListResponse,
   useResourceResponse,
 } from "./types";
-import { doApiRequest } from "./utils";
+import { doApiRequest, patchInList } from "./utils";
 
 export function useResource<R>(
   url: string,
@@ -18,13 +20,14 @@ export function useResource<R>(
   });
   const mutateWithAPI = async (
     patchedResource?: Partial<R>,
-    method: string | null = "PATCH",
-    revalidate: boolean = true
+    options: mutateResourceOptions = {}
   ) => {
+    const { method = "PATCH", sendRequest = true, revalidate = true } = options;
+
     if (patchedResource && data) {
       mutate({ ...data, ...patchedResource }, false);
     }
-    if (method !== null) {
+    if (sendRequest) {
       await doApiRequest(url, {
         method,
         body: patchedResource,
@@ -35,32 +38,6 @@ export function useResource<R>(
     else return new Promise<R>(() => {});
   };
   return { data, error, isValidating, mutate: mutateWithAPI };
-}
-
-/**
- * Patch in an updated element in a list.
- * @param list list of elements, where elements have an `id` property.
- * @param id identifier to update
- * @param patch updated properties. If null, delete from list.
- */
-function patchInList<T extends Identifiable>(
-  list: T[],
-  id: Identifier,
-  patch: Partial<T> | null
-): [T[], boolean] {
-  for (let i = 0; i < list.length; i += 1) {
-    const obj = list[i];
-    // If the ID of this element matches the desired ID
-    if (obj.id === id) {
-      if (patch === null) {
-        return [[...list.slice(0, i), ...list.slice(i + 1)], true];
-      }
-      const newObj = { ...obj, ...patch };
-      return [[...list.slice(0, i), newObj, ...list.slice(i + 1)], true];
-    }
-  }
-  // if no match exists, return the original list.
-  return [list, false];
 }
 
 export function useResourceList<R extends Identifiable>(
@@ -76,11 +53,16 @@ export function useResourceList<R extends Identifiable>(
   const mutateWithAPI = async (
     id?: Identifier,
     patchedResource?: Partial<R> | null,
-    method: string | null = "PATCH",
-    revalidate: boolean = true,
-    append: boolean = false,
-    sortBy: (a: R, b: R) => number = (a, b) => 0
+    options: mutateResourceListOptions<R> = {}
   ) => {
+    const {
+      method = "PATCH",
+      sendRequest = true,
+      revalidate = true,
+      append = false,
+      sortBy = (a, b) => 0,
+    } = options;
+
     let didPatch: boolean = false;
     // if ID is undefined/null, don't patch.
     if (append && data) {
@@ -94,7 +76,7 @@ export function useResourceList<R extends Identifiable>(
       }
     }
     // Only perform an API request when the patch finds a matching entry.
-    if (!append && id && didPatch && method) {
+    if (!append && sendRequest && didPatch) {
       await doApiRequest(getResourceUrl(id), {
         method,
         body: patchedResource,

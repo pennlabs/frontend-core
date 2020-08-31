@@ -27,16 +27,17 @@ export function useRealtimeResource<R extends Identifiable>(
 
   // TODO: Mutate (with no revalidation) when updates come through
   const updateCallback = async (update: ResourceUpdate<R>) => {
+    const mutateOptions = { sendRequest: false, revalidate: false };
     switch (update.action) {
       case Action.CREATED:
         // This case shouldn't be hit: you should never subscribe to updates
         // on an instance that hasn't yet been created
         break;
       case Action.UPDATED:
-        return mutate(update.instance, null, false);
+        return mutate(update.instance, mutateOptions);
       // How do we want to handle deletion of a single object?
       case Action.DELETED:
-        return mutate(null, null, false);
+        return mutate(null, mutateOptions);
     }
   };
 
@@ -73,18 +74,22 @@ export function useRealtimeResourceList<R extends Identifiable>(
   const updateCallback = async (update: ResourceUpdate<R>) => {
     switch (update.action) {
       case Action.CREATED:
-        return mutate(
-          update.instance.id,
-          update.instance,
-          null,
-          false,
-          true,
-          orderBy
-        );
+        return mutate(update.instance.id, update.instance, {
+          sendRequest: false,
+          revalidate: false,
+          append: true,
+          sortBy: orderBy,
+        });
       case Action.UPDATED:
-        return mutate(update.instance.id, update.instance, null, false);
+        return mutate(update.instance.id, update.instance, {
+          sendRequest: false,
+          revalidate: false,
+        });
       case Action.DELETED:
-        return mutate(update.instance.id, null, null, false);
+        return mutate(update.instance.id, null, {
+          sendRequest: false,
+          revalidate: false,
+        });
     }
   };
 
