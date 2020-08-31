@@ -5,7 +5,7 @@ export const SITE_ORIGIN =
     : `https://${window.location.host}`;
 
 export function getApiUrl(path: string): string {
-  // If a fully qualified cross-origin path, don't try and change it
+  // If path is a fully qualified cross-origin path, don't try and change it
   if (/^https?:\/\//.test(path)) {
     const url = new URL(path);
     return url.pathname + url.search;
