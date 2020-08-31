@@ -1,0 +1,18 @@
+{
+  "name": "@pennlabs/frontend-core",
+  "version": "1.0.0",
+  "description": "Frontend utilities from Penn Labs",
+  "main": "index.js",
+  "repository": "https://github.com/pennlabs/frontend-core",
+  "author": "Penn Labs",
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "lerna": "^3.22.1",
+    "prettier": "^2.1.1",
+    "typescript": "^4.0.2"
+  },
+  "workspaces": [
+    "packages/*"
+  ]
+}

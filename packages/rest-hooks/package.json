@@ -1,0 +1,19 @@
+{
+  "name": "@pennlabs/rest-hooks",
+  "version": "0.0.1",
+  "description": "Hooks for fetching REST resources built on top of SWR",
+  "main": "index.js",
+  "author": "Penn Labs",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "build": "npm run clean && npm run compile",
+    "clean": "rm -rf ./dist && rm -rf tsconfig.tsbuildinfo",
+    "compile": "tsc -b tsconfig.json"
+  },
+  "dependencies": {
+    "@types/react": "^16.9.48",
+    "react": "^16.13.1",
+    "swr": "^0.3.1"
+  }
+}
