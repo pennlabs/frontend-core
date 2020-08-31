@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "Hooks for fetching REST resources built on top of SWR",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "author": "Penn Labs",
   "license": "MIT",
   "private": false,

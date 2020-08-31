@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "Hooks for seamlessly integrating django-rest-live",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "author": "Penn Labs",
   "license": "MIT",
   "private": false,

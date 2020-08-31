@@ -3,12 +3,14 @@ import {
   useResourceListResponse,
   useResourceResponse,
   Identifiable,
+  Identifier,
 } from "./types";
 
 export {
   useResource,
   useResourceList,
   Identifiable,
+  Identifier,
   useResourceListResponse,
   useResourceResponse,
 };

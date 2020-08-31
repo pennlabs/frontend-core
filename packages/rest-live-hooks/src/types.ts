@@ -8,7 +8,7 @@ export enum Action {
 export type SubscribeRequest = {
   model: string;
   property?: string;
-  value: string;
+  value: string | number;
 };
 
 export type ResourceUpdate<R extends Identifiable> = {

@@ -2,8 +2,6 @@ import useSWR, { ConfigInterface } from "swr";
 import {
   Identifiable,
   Identifier,
-  mutateResourceFunction,
-  mutateResourceListFunction,
   useResourceListResponse,
   useResourceResponse,
 } from "./types";
@@ -47,7 +45,7 @@ export function useResource<R>(
  */
 function patchInList<T extends Identifiable>(
   list: T[],
-  id: number,
+  id: Identifier,
   patch: Partial<T> | null
 ): [T[], boolean] {
   for (let i = 0; i < list.length; i += 1) {
@@ -76,32 +74,32 @@ export function useResourceList<R extends Identifiable>(
     ...config,
   });
   const mutateWithAPI = async (
-    id?: number,
+    id?: Identifier,
     patchedResource?: Partial<R> | null,
     method: string | null = "PATCH",
-    revalidate: boolean = true
+    revalidate: boolean = true,
+    append: boolean = false,
+    sortBy: (a: R, b: R) => number = (a, b) => 0
   ) => {
-    // if ID is undefined/null, don't patch.
     let didPatch: boolean = false;
-    if (id && data) {
-      const [patchedList, didPatchInner] = patchInList(
-        data,
-        id,
-        patchedResource
-      );
-      didPatch = didPatchInner;
+    // if ID is undefined/null, don't patch.
+    if (append && data) {
+      const newList = [patchedResource as R, ...data].sort(sortBy);
+      mutate(newList, false);
+    } else if (id && data) {
+      let patchedList: R[];
+      [patchedList, didPatch] = patchInList(data, id, patchedResource);
       if (didPatch) {
         mutate(patchedList, false);
       }
     }
     // Only perform an API request when the patch finds a matching entry.
-    if (id && didPatch && method) {
+    if (!append && id && didPatch && method) {
       await doApiRequest(getResourceUrl(id), {
         method,
         body: patchedResource,
       });
     }
-    // Always revalidate, even if mutate was a no-op.
     if (revalidate) return mutate();
     else return new Promise<R[]>(() => {});
   };
