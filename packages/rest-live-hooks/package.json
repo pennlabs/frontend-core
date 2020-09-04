@@ -13,9 +13,10 @@
     "compile": "tsc -b tsconfig.json"
   },
   "dependencies": {
+    "@pennlabs/rest-hooks": "*",
     "@types/react": "^16.9.48",
+    "@types/websocket": "^1.0.1",
     "react": "^16.13.1",
-    "swr": "^0.3.1",
-    "@pennlabs/rest-hooks": "*"
+    "swr": "^0.3.1"
   }
 }

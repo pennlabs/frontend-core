@@ -8,6 +8,8 @@ import {
   useResourceResponse,
 } from "@pennlabs/rest-hooks";
 import { Action, ResourceUpdate, SubscribeRequest } from "./types";
+import { websocket } from "./websocket";
+import { useEffect } from "react";
 
 export function useRealtimeResource<R extends Identifiable>(
   modelLabel: string,
@@ -19,13 +21,11 @@ export function useRealtimeResource<R extends Identifiable>(
   const response = useResource(url, initialData, config);
   const { mutate } = response;
 
-  // TODO: Subscribe to updates for this resource (will need ID+model name)
   const subscribeRequest: SubscribeRequest = {
     model: modelLabel,
     value: resourceId,
   };
 
-  // TODO: Mutate (with no revalidation) when updates come through
   const updateCallback = async (update: ResourceUpdate<R>) => {
     const mutateOptions = { sendRequest: false, revalidate: false };
     switch (update.action) {
@@ -40,6 +40,12 @@ export function useRealtimeResource<R extends Identifiable>(
         return mutate(null, mutateOptions);
     }
   };
+  useEffect(() => {
+    const sub = websocket.subscribe(subscribeRequest, updateCallback);
+    return () => {
+      websocket.unsubscribe(sub);
+    };
+  }, []);
 
   return response;
 }
@@ -62,15 +68,12 @@ export function useRealtimeResourceList<R extends Identifiable>(
   );
   const { mutate } = response;
 
-  // TODO: Subscribe to updates for this resource (will need ID+model name)
   const subscribeRequest: SubscribeRequest = {
     model: modelLabel,
     property: groupField,
     value: listId,
   };
-  // TODO: Send subscription
 
-  // TODO: Mutate (with no revalidation) when updates come through
   const updateCallback = async (update: ResourceUpdate<R>) => {
     switch (update.action) {
       case Action.CREATED:
@@ -92,6 +95,13 @@ export function useRealtimeResourceList<R extends Identifiable>(
         });
     }
   };
+
+  useEffect(() => {
+    const sub = websocket.subscribe(subscribeRequest, updateCallback);
+    return () => {
+      websocket.unsubscribe(sub);
+    };
+  }, []);
 
   return response;
 }
