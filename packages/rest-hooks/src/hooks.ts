@@ -56,9 +56,6 @@ export function useResourceList<R extends Identifiable>(
       append = false,
       sortBy = (a, b) => 0,
     } = options;
-    console.log("MUTATION");
-    console.log(`id: ${id}, data: ${data}`);
-
     let didPatch: boolean = false;
     // if ID is undefined/null, don't patch.
     if (append && data) {
@@ -67,8 +64,6 @@ export function useResourceList<R extends Identifiable>(
     } else if (id && data) {
       let patchedList: R[];
       [patchedList, didPatch] = patchInList(data, id, patchedResource);
-      console.log(patchedList);
-      console.log(didPatch);
       if (didPatch) {
         mutate(patchedList, false);
       }

@@ -24,21 +24,17 @@ class WebsocketManager {
 
   connect(): Promise<void> {
     const url = SITE_ORIGIN() + this.url;
-    console.log("CONNECTING: " + url);
     return new Promise<void>((resolve, reject) => {
       this.websocket = new WebSocket(url);
       this.websocket.onerror = () => {};
       this.websocket.onclose = () => {};
       this.websocket.onmessage = (event: MessageEvent) => {
         const message = JSON.parse(event.data);
-        console.log(message);
         if (message.model) {
           const update = message as ResourceUpdate<any>;
-          console.log(update);
           const relevantListeners = this.listeners.filter(
             (listener) => listener.model === update.model
           );
-          console.log(relevantListeners);
           relevantListeners.forEach((listener) =>
             listener.notify.current(update)
           );
@@ -59,7 +55,6 @@ class WebsocketManager {
     request: SubscribeRequest,
     notify: MutableRefObject<(update: ResourceUpdate<T>) => Promise<T[] | T>>
   ): Promise<number> {
-    console.log("SUBSCRIBING");
     if (this.websocket === null) {
       await this.connect();
     }
