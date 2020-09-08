@@ -79,7 +79,6 @@ export function useRealtimeResourceList<
           sortBy: orderBy,
         });
       case Action.UPDATED:
-        console.log("UPDATE");
         return mutate(update.instance.id, update.instance, {
           sendRequest: false,
           revalidate: false,

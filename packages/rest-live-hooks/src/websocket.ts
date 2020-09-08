@@ -3,7 +3,7 @@ import { Identifiable } from "@pennlabs/rest-hooks";
 import { MutableRefObject } from "react";
 
 type UpdateListener = {
-  model: string;
+  request: SubscribeRequest;
   notify: MutableRefObject<
     (update: ResourceUpdate<any>) => Promise<any[] | any>
   >;
@@ -33,7 +33,10 @@ class WebsocketManager {
         if (message.model) {
           const update = message as ResourceUpdate<any>;
           const relevantListeners = this.listeners.filter(
-            (listener) => listener.model === update.model
+            (listener) =>
+              listener.request.model === update.model &&
+              update.instance[listener.request.property] ===
+                listener.request.value
           );
           relevantListeners.forEach((listener) =>
             listener.notify.current(update)
@@ -60,7 +63,7 @@ class WebsocketManager {
     }
     this.websocket.send(JSON.stringify(request));
     this.listeners.push({
-      model: request.model,
+      request: request,
       notify,
     });
     return 0;
