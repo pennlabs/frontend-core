@@ -11,11 +11,9 @@ import { doApiRequest, patchInList } from "./utils";
 
 export function useResource<R>(
   url: string,
-  initialData?: R,
   config?: ConfigInterface<R>
 ): useResourceResponse<R> {
   const { data, error, isValidating, mutate } = useSWR(url, {
-    initialData,
     ...config,
   });
   const mutateWithAPI = async (
@@ -43,13 +41,9 @@ export function useResource<R>(
 export function useResourceList<R extends Identifiable>(
   listUrl: string | (() => string),
   getResourceUrl: (id: Identifier) => string,
-  initialData?: R[],
   config?: ConfigInterface<R[]>
 ): useResourceListResponse<R> {
-  const { data, error, isValidating, mutate } = useSWR(listUrl, {
-    initialData,
-    ...config,
-  });
+  const { data, error, isValidating, mutate } = useSWR(listUrl, config);
   const mutateWithAPI = async (
     id?: Identifier,
     patchedResource?: Partial<R> | null,
@@ -62,6 +56,8 @@ export function useResourceList<R extends Identifiable>(
       append = false,
       sortBy = (a, b) => 0,
     } = options;
+    console.log("MUTATION");
+    console.log(`id: ${id}, data: ${data}`);
 
     let didPatch: boolean = false;
     // if ID is undefined/null, don't patch.
@@ -71,6 +67,8 @@ export function useResourceList<R extends Identifiable>(
     } else if (id && data) {
       let patchedList: R[];
       [patchedList, didPatch] = patchInList(data, id, patchedResource);
+      console.log(patchedList);
+      console.log(didPatch);
       if (didPatch) {
         mutate(patchedList, false);
       }

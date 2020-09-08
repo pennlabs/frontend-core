@@ -1,10 +1,12 @@
 import { Identifiable, Identifier } from "./types";
 
-export const SITE_ORIGIN =
-  window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1"
-    ? `http://${window.location.host}`
-    : `https://${window.location.host}`;
+export const SITE_ORIGIN = (): string =>
+  typeof window !== "undefined"
+    ? window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1"
+      ? `http://${window.location.host}`
+      : `https://${window.location.host}`
+    : "";
 
 export function getApiUrl(path: string): string {
   // If path is a fully qualified cross-origin path, don't try and change it
@@ -13,7 +15,7 @@ export function getApiUrl(path: string): string {
     return url.pathname + url.search;
   }
   // If it's local and relative, make it absolute for Next to be happy
-  return SITE_ORIGIN + path;
+  return SITE_ORIGIN() + path;
 }
 
 /**

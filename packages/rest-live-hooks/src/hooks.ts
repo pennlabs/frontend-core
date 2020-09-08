@@ -9,24 +9,24 @@ import {
 } from "@pennlabs/rest-hooks";
 import { Action, ResourceUpdate, SubscribeRequest } from "./types";
 import { websocket } from "./websocket";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export function useRealtimeResource<R extends Identifiable>(
   modelLabel: string,
   resourceId: Identifier,
   url: string,
-  initialData?: R,
   config?: ConfigInterface<R>
 ): useResourceResponse<R> {
-  const response = useResource(url, initialData, config);
+  const response = useResource(url, config);
   const { mutate } = response;
+  const callbackRef = useRef<(update: ResourceUpdate<R>) => Promise<R>>();
 
   const subscribeRequest: SubscribeRequest = {
     model: modelLabel,
     value: resourceId,
   };
 
-  const updateCallback = async (update: ResourceUpdate<R>) => {
+  callbackRef.current = async (update: ResourceUpdate<R>) => {
     const mutateOptions = { sendRequest: false, revalidate: false };
     switch (update.action) {
       case Action.CREATED:
@@ -41,10 +41,7 @@ export function useRealtimeResource<R extends Identifiable>(
     }
   };
   useEffect(() => {
-    const sub = websocket.subscribe(subscribeRequest, updateCallback);
-    return () => {
-      websocket.unsubscribe(sub);
-    };
+    websocket.subscribe(subscribeRequest, callbackRef).then();
   }, []);
 
   return response;
@@ -57,16 +54,11 @@ export function useRealtimeResourceList<R extends Identifiable>(
   orderBy: (a: R, b: R) => number,
   listUrl: string | (() => string),
   getResourceUrl: (id: Identifier) => string,
-  initialData?: R[],
   config?: ConfigInterface<R[]>
 ): useResourceListResponse<R> {
-  const response = useResourceList(
-    listUrl,
-    getResourceUrl,
-    initialData,
-    config
-  );
+  const response = useResourceList(listUrl, getResourceUrl, config);
   const { mutate } = response;
+  const callbackRef = useRef<(update: ResourceUpdate<R>) => Promise<R[]>>();
 
   const subscribeRequest: SubscribeRequest = {
     model: modelLabel,
@@ -74,7 +66,7 @@ export function useRealtimeResourceList<R extends Identifiable>(
     value: listId,
   };
 
-  const updateCallback = async (update: ResourceUpdate<R>) => {
+  callbackRef.current = async (update: ResourceUpdate<R>) => {
     switch (update.action) {
       case Action.CREATED:
         return mutate(update.instance.id, update.instance, {
@@ -84,6 +76,7 @@ export function useRealtimeResourceList<R extends Identifiable>(
           sortBy: orderBy,
         });
       case Action.UPDATED:
+        console.log("UPDATE");
         return mutate(update.instance.id, update.instance, {
           sendRequest: false,
           revalidate: false,
@@ -97,10 +90,10 @@ export function useRealtimeResourceList<R extends Identifiable>(
   };
 
   useEffect(() => {
-    const sub = websocket.subscribe(subscribeRequest, updateCallback);
-    return () => {
-      websocket.unsubscribe(sub);
-    };
+    websocket.subscribe(subscribeRequest, callbackRef).then();
+    // return () => {
+    //   websocket.unsubscribe(sub);
+    // };
   }, []);
 
   return response;

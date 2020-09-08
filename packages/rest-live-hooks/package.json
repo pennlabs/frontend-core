@@ -12,11 +12,13 @@
     "clean": "rm -rf ./dist && rm -rf tsconfig.tsbuildinfo",
     "compile": "tsc -b tsconfig.json"
   },
+  "peerDependencies": {
+    "react": ">=16.8.0"
+  },
   "dependencies": {
     "@pennlabs/rest-hooks": "*",
     "@types/react": "^16.9.48",
     "@types/websocket": "^1.0.1",
-    "react": "^16.13.1",
     "swr": "^0.3.1"
   }
 }
