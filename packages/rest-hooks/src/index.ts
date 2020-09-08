@@ -1,4 +1,5 @@
-import { useResource, useResourceList } from "./hooks";
+import useResource from "./useResource";
+import useResourceList from "./useResourceList";
 import {
   useResourceListResponse,
   useResourceResponse,

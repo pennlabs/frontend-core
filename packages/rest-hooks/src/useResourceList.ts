@@ -1,44 +1,14 @@
-import useSWR, { ConfigInterface } from "swr";
 import {
   Identifiable,
   Identifier,
   mutateResourceListOptions,
-  mutateResourceOptions,
   useResourceListResponse,
-  useResourceResponse,
 } from "./types";
-import { doApiRequest, patchInList } from "./utils";
+import useSWR, { ConfigInterface } from "swr";
+import { patchInList } from "./utils";
+import { doApiRequest } from "./fetching";
 
-export function useResource<R>(
-  url: string,
-  config?: ConfigInterface<R>
-): useResourceResponse<R> {
-  const { data, error, isValidating, mutate } = useSWR(url, {
-    ...config,
-  });
-  const mutateWithAPI = async (
-    patchedResource?: Partial<R>,
-    options: mutateResourceOptions = {}
-  ) => {
-    const { method = "PATCH", sendRequest = true, revalidate = true } = options;
-
-    if (patchedResource && data) {
-      mutate({ ...data, ...patchedResource }, false);
-    }
-    if (sendRequest) {
-      await doApiRequest(url, {
-        method,
-        body: patchedResource,
-      });
-    }
-
-    if (revalidate) return mutate();
-    else return new Promise<R>(() => {});
-  };
-  return { data, error, isValidating, mutate: mutateWithAPI };
-}
-
-export function useResourceList<R extends Identifiable>(
+function useResourceList<R extends Identifiable>(
   listUrl: string | (() => string),
   getResourceUrl: (id: Identifier) => string,
   config?: ConfigInterface<R[]>
@@ -80,3 +50,5 @@ export function useResourceList<R extends Identifiable>(
   };
   return { data, error, isValidating, mutate: mutateWithAPI };
 }
+
+export default useResourceList;
