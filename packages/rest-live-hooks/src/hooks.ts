@@ -47,10 +47,13 @@ export function useRealtimeResource<R extends Identifiable>(
   return response;
 }
 
-export function useRealtimeResourceList<R extends Identifiable>(
+export function useRealtimeResourceList<
+  R extends Identifiable,
+  K extends keyof R
+>(
   modelLabel: string,
-  listId: string | number,
-  groupField: string,
+  listId: Identifier,
+  groupField: K,
   orderBy: (a: R, b: R) => number,
   listUrl: string | (() => string),
   getResourceUrl: (id: Identifier) => string,

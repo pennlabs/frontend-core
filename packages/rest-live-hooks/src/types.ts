@@ -7,7 +7,7 @@ export enum Action {
 }
 export type SubscribeRequest = {
   model: string;
-  property?: string;
+  property?: string | number | symbol;
   value: string | number;
 };
 
