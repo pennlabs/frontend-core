@@ -1,6 +1,6 @@
 # REST hooks
 
-React hooks for easy CRUD with REST resources.
+React hooks for fetching resources at RESTful endpoints built on top of SWR.
 
 This package exposes two hooks, `useResource` and `useResourceList`.
 Both hooks have similar semantics to [SWR](https://github.com/vercel/swr/),
