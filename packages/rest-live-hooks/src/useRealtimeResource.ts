@@ -7,7 +7,7 @@ import {
 import { ConfigInterface } from "swr";
 import { useEffect, useRef } from "react";
 import { Action, ResourceUpdate, SubscribeRequest } from "./types";
-import { websocket } from "./websocket";
+import { takeTicket, websocket } from "./websocket";
 
 function useRealtimeResource<R extends Identifiable>(
   modelLabel: string,
@@ -19,7 +19,7 @@ function useRealtimeResource<R extends Identifiable>(
   const { mutate } = response;
   const callbackRef = useRef<(update: ResourceUpdate<R>) => Promise<R>>();
 
-  const subscribeRequest: SubscribeRequest = {
+  const subscribeRequest: SubscribeRequest<R> = {
     model: modelLabel,
     value: resourceId,
   };
@@ -39,7 +39,9 @@ function useRealtimeResource<R extends Identifiable>(
     }
   };
   useEffect(() => {
-    websocket.subscribe(subscribeRequest, callbackRef).then();
+    const uuid = takeTicket();
+    websocket.subscribe(subscribeRequest, callbackRef, uuid).then();
+    return () => websocket.unsubscribe(uuid);
   }, []);
 
   return response;

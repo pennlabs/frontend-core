@@ -8,6 +8,7 @@ type UpdateListener = {
   notify: MutableRefObject<
     (update: ResourceUpdate<any>) => Promise<any[] | any>
   >;
+  uuid: number;
 };
 
 class WebsocketManager {
@@ -55,8 +56,9 @@ class WebsocketManager {
 
   async subscribe<T extends Identifiable>(
     request: SubscribeRequest<T>,
-    notify: MutableRefObject<(update: ResourceUpdate<T>) => Promise<T[] | T>>
-  ): Promise<number> {
+    notify: MutableRefObject<(update: ResourceUpdate<T>) => Promise<T[] | T>>,
+    uuid: number
+  ) {
     if (this.websocket === null) {
       await this.connect();
     }
@@ -64,11 +66,19 @@ class WebsocketManager {
     this.listeners.push({
       request: request,
       notify,
+      uuid,
     });
-    return 0;
   }
 
-  unsubscribe(id: number) {}
+  unsubscribe(uuid: number) {
+    const request = this.listeners.find((l) => l.uuid === uuid).request;
+    this.websocket.send(JSON.stringify({ ...request, unsubscribe: true }));
+    this.listeners = this.listeners.filter((l) => l.uuid !== uuid);
+  }
 }
 
+export const takeTicket = (() => {
+  let count = 0;
+  return () => count++;
+})();
 export const websocket = new WebsocketManager("/ws/subscribe/");

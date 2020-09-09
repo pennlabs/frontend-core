@@ -53,6 +53,29 @@ describe("useRealtimeResource", () => {
     expect(container.firstChild.textContent).toBe("message: hi");
   });
 
+  test("should unsubscribe on unmount", async () => {
+    const Page = () => {
+      const { data } = useRealtimeResource(MODEL, 1, "/items/1/", { fetcher });
+      return <div>message: {data && data.message}</div>;
+    };
+    const { container, unmount } = render(<Page />);
+    await ws.connected;
+    await expect(ws).toReceiveMessage(
+      JSON.stringify({
+        model: MODEL,
+        value: 1,
+      })
+    );
+    unmount();
+    await expect(ws).toReceiveMessage(
+      JSON.stringify({
+        model: MODEL,
+        value: 1,
+        unsubscribe: true,
+      })
+    );
+  });
+
   test("should update with message", async () => {
     const Page = () => {
       const { data } = useRealtimeResource(MODEL, 1, "/items/2/", { fetcher });

@@ -7,7 +7,7 @@ import {
 import { ConfigInterface } from "swr";
 import { useEffect, useRef } from "react";
 import { Action, ResourceUpdate, SubscribeRequest } from "./types";
-import { websocket } from "./websocket";
+import { takeTicket, websocket } from "./websocket";
 
 function useRealtimeResourceList<R extends Identifiable, K extends keyof R>(
   listUrl: string | (() => string),
@@ -45,10 +45,9 @@ function useRealtimeResourceList<R extends Identifiable, K extends keyof R>(
   };
 
   useEffect(() => {
-    websocket.subscribe(subscribeRequest, callbackRef).then();
-    // return () => {
-    //   websocket.unsubscribe(sub);
-    // };
+    const uuid = takeTicket();
+    websocket.subscribe(subscribeRequest, callbackRef, uuid).then();
+    return () => websocket.unsubscribe(uuid);
   }, []);
 
   return response;

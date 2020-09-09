@@ -69,6 +69,37 @@ describe("useRealtimeResource", () => {
     expect(container.firstChild.textContent).toBe("message: hello world");
   });
 
+  test("should unsubscribe on unmount", async () => {
+    const num = 1;
+    const Page = () => {
+      const { data } = useRealtimeResourceList(
+        `/items-${num}/`,
+        (id) => `/items-${num}/${id}/`,
+        { model: MODEL, property: "list_id", value: 1 },
+        { fetcher }
+      );
+      return <div>message: {data && data.map((e) => e.message).join(" ")}</div>;
+    };
+    const { unmount } = render(<Page />);
+    await ws.connected;
+    await expect(ws).toReceiveMessage(
+      JSON.stringify({
+        model: MODEL,
+        property: "list_id",
+        value: 1,
+      } as SubscribeRequest<Elem>)
+    );
+    unmount();
+    await expect(ws).toReceiveMessage(
+      JSON.stringify({
+        model: MODEL,
+        property: "list_id",
+        value: 1,
+        unsubscribe: true,
+      })
+    );
+  });
+
   test("should update from websocket", async () => {
     const num = 2;
     const Page = () => {
