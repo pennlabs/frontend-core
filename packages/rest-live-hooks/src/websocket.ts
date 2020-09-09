@@ -1,6 +1,7 @@
 import { ResourceUpdate, SubscribeRequest } from "./types";
 import { Identifiable } from "@pennlabs/rest-hooks";
 import { MutableRefObject } from "react";
+import { SITE_ORIGIN } from "./findOrigin";
 
 type UpdateListener = {
   request: SubscribeRequest;
@@ -8,14 +9,6 @@ type UpdateListener = {
     (update: ResourceUpdate<any>) => Promise<any[] | any>
   >;
 };
-
-export const SITE_ORIGIN = (): string =>
-  typeof window !== "undefined"
-    ? window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1"
-      ? `ws://${window.location.host}`
-      : `wss://${window.location.host}`
-    : "";
 
 class WebsocketManager {
   private listeners: UpdateListener[];
@@ -35,7 +28,7 @@ class WebsocketManager {
           const relevantListeners = this.listeners.filter(
             (listener) =>
               listener.request.model === update.model &&
-              update.instance[listener.request.property] ===
+              update.instance[listener.request.property || "id"] ===
                 listener.request.value
           );
           relevantListeners.forEach((listener) =>
@@ -52,6 +45,12 @@ class WebsocketManager {
     this.listeners = [];
     this.websocket = null;
     this.url = url;
+  }
+
+  reset() {
+    this.listeners = [];
+    this.websocket.close();
+    this.websocket = null;
   }
 
   async subscribe<T extends Identifiable>(
