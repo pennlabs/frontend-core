@@ -1,6 +1,6 @@
 {
   "name": "@pennlabs/rest-live-hooks",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Hooks for seamlessly integrating django-rest-live",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -17,7 +17,7 @@
     "react": ">=16.8.0"
   },
   "dependencies": {
-    "@pennlabs/rest-hooks": "*",
+    "@pennlabs/rest-hooks": "^0.1.0",
     "swr": "^0.3.1"
   },
   "devDependencies": {
