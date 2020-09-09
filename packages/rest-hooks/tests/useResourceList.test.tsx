@@ -197,4 +197,36 @@ describe("useResourceList", () => {
     expect(container.firstChild.textContent).toBe("message: hello world");
     expect(fetching.doApiRequest).toHaveBeenCalledTimes(0);
   });
+
+  test("should update in append mode if ID exists", async () => {
+    const num = 7;
+    const Page = () => {
+      const { data, mutate } = useResourceList(
+        `/items/${num}/`,
+        (id) => `/items/${num}/${id}/`,
+        {
+          fetcher,
+        }
+      );
+      return (
+        <div
+          onClick={() =>
+            mutate(
+              1,
+              { id: 1, message: "Yo" },
+              { sendRequest: false, revalidate: false, append: true }
+            )
+          }
+        >
+          message: {data && data.map((e) => e.message).join(" ")}
+        </div>
+      );
+    };
+    const { container } = render(<Page />);
+    await waitForDomChange({ container });
+    expect(container.firstChild.textContent).toBe("message: hello world");
+    fireEvent.click(container.firstElementChild);
+    expect(container.firstChild.textContent).toBe("message: Yo world");
+    expect(fetching.doApiRequest).toHaveBeenCalledTimes(0);
+  });
 });
