@@ -41,40 +41,15 @@ jobs:
           name: Test
           command: |
             yarn lerna run test
-
-  publish:
-    docker:
-      - image: circleci/node:14
-
-    # This makes all commands from here on out relative to service-a
-    working_directory: ~/ci
-
-    steps:
-      - checkout:
-          path: ~/ci
-      - *restore-cache
-      - *install-deps
-      - *save-cache
       - run:
           name: Publish
           command: |
-            yarn lerna publish
+            yarn lerna publish from-git
+
 
 workflows:
   version: 2
   build-and-publish:
     jobs:
       - build-and-test:
-          filters:
-            tags:
-              only: /.*/
-      - publish:
           context: npm-publish
-          requires:
-            - build-and-test
-          filters:
-            tags:
-              only: /@pennlabs\/[a-z\-]+@[0-9]+(\.[0-9]+)*/
-            branches:
-              ignore: /.*/
-
