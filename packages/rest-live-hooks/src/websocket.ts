@@ -4,7 +4,7 @@ import { MutableRefObject } from "react";
 import { SITE_ORIGIN } from "./findOrigin";
 
 type UpdateListener = {
-  request: SubscribeRequest;
+  request: SubscribeRequest<any>;
   notify: MutableRefObject<
     (update: ResourceUpdate<any>) => Promise<any[] | any>
   >;
@@ -54,7 +54,7 @@ class WebsocketManager {
   }
 
   async subscribe<T extends Identifiable>(
-    request: SubscribeRequest,
+    request: SubscribeRequest<T>,
     notify: MutableRefObject<(update: ResourceUpdate<T>) => Promise<T[] | T>>
   ): Promise<number> {
     if (this.websocket === null) {

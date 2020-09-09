@@ -5,9 +5,12 @@ export enum Action {
   UPDATED = "UPDATED",
   DELETED = "DELETED",
 }
-export type SubscribeRequest = {
+export type SubscribeRequest<
+  R extends Identifiable,
+  K extends keyof R = keyof R
+> = {
   model: string;
-  property?: string | number | symbol;
+  property?: K;
   value: string | number;
 };
 
