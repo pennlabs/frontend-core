@@ -10,19 +10,13 @@ import { Action, ResourceUpdate, SubscribeRequest } from "./types";
 import { takeTicket, websocket } from "./websocket";
 
 function useRealtimeResource<R extends Identifiable>(
-  modelLabel: string,
-  resourceId: Identifier,
   url: string,
+  subscribeRequest: SubscribeRequest<R>,
   config?: ConfigInterface<R>
 ): useResourceResponse<R> {
   const response = useResource(url, config);
   const { mutate } = response;
   const callbackRef = useRef<(update: ResourceUpdate<R>) => Promise<R>>();
-
-  const subscribeRequest: SubscribeRequest<R> = {
-    model: modelLabel,
-    value: resourceId,
-  };
 
   callbackRef.current = async (update: ResourceUpdate<R>) => {
     const mutateOptions = { sendRequest: false, revalidate: false };

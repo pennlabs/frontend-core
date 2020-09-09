@@ -37,7 +37,11 @@ jest.mock("../src/findOrigin", () => ({
 describe("useRealtimeResource", () => {
   test("should connect to websocket", async () => {
     const Page = () => {
-      const { data } = useRealtimeResource(MODEL, 1, "/items/1/", { fetcher });
+      const { data } = useRealtimeResource(
+        "/items/1/",
+        { model: MODEL, value: 1 },
+        { fetcher }
+      );
       return <div>message: {data && data.message}</div>;
     };
     const { container } = render(<Page />);
@@ -55,7 +59,14 @@ describe("useRealtimeResource", () => {
 
   test("should unsubscribe on unmount", async () => {
     const Page = () => {
-      const { data } = useRealtimeResource(MODEL, 1, "/items/1/", { fetcher });
+      const { data } = useRealtimeResource(
+        "/items/1/",
+        {
+          model: MODEL,
+          value: 1,
+        },
+        { fetcher }
+      );
       return <div>message: {data && data.message}</div>;
     };
     const { container, unmount } = render(<Page />);
@@ -78,7 +89,11 @@ describe("useRealtimeResource", () => {
 
   test("should update with message", async () => {
     const Page = () => {
-      const { data } = useRealtimeResource(MODEL, 1, "/items/2/", { fetcher });
+      const { data } = useRealtimeResource(
+        "/items/2/",
+        { model: MODEL, value: 1 },
+        { fetcher }
+      );
       return <div>message: {data && data.message}</div>;
     };
     const { container } = render(<Page />);
