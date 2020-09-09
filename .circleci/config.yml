@@ -44,6 +44,7 @@ jobs:
       - run:
           name: Publish
           command: |
+            echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/ci/.npmrc
             yarn lerna publish from-git --yes
 
 
