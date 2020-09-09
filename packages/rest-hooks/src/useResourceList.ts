@@ -28,14 +28,14 @@ function useResourceList<R extends Identifiable>(
     } = options;
     let didPatch: boolean = false;
     // if ID is undefined/null, don't patch.
-    if (append && data) {
-      const newList = [patchedResource as R, ...data].sort(sortBy);
-      mutate(newList, false);
-    } else if (id && data) {
+    if (id && data) {
       let patchedList: R[];
       [patchedList, didPatch] = patchInList(data, id, patchedResource);
       if (didPatch) {
-        mutate(patchedList, false);
+        mutate(patchedList.sort(sortBy), false);
+      } else if (append) {
+        const newList = [patchedResource as R, ...data];
+        mutate(newList.sort(sortBy), false);
       }
     }
     // Only perform an API request when the patch finds a matching entry.
