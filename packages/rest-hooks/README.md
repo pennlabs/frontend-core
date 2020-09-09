@@ -7,7 +7,7 @@ Both hooks have similar semantics to [SWR](https://github.com/vercel/swr/),
 with one key improvement: generic, optimistic client-side updates!
 
 They take advantage of the [mutation and POST request](https://swr.vercel.app/docs/mutation#mutation-and-post-request)
-pattern in the SWR docs to make local changes feel more or less instantaneous.
+pattern in the SWR docs to make local changes optimistic and feel more or less instantaneous.
 
 ## Documentation
 
