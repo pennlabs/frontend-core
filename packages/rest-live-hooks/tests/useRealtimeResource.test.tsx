@@ -22,7 +22,7 @@ const fetcher = async (url: string): Promise<Elem> => ({
 });
 
 beforeEach(() => {
-  ws = new WS(`${WS_HOST}/ws/subscribe/`);
+  ws = new WS(`${WS_HOST}/api/ws/subscribe/`);
 });
 afterEach(() => {
   cleanup();
