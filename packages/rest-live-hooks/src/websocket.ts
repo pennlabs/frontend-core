@@ -14,6 +14,8 @@ type UpdateListener = {
 class WebsocketManager {
   private listeners: UpdateListener[];
   private websocket: WebSocket | null;
+  private connectionComplete: Promise<boolean>;
+  private setConnected: (value?: boolean | PromiseLike<boolean>) => void;
   private readonly url: string;
 
   connect(): Promise<void> {
@@ -38,6 +40,7 @@ class WebsocketManager {
         }
       };
       this.websocket.onopen = () => {
+        this.setConnected(true);
         resolve();
       };
     });
@@ -46,6 +49,9 @@ class WebsocketManager {
     this.listeners = [];
     this.websocket = null;
     this.url = url;
+    this.connectionComplete = new Promise<boolean>((resolve) => {
+      this.setConnected = resolve;
+    });
   }
 
   reset() {
@@ -61,6 +67,8 @@ class WebsocketManager {
   ) {
     if (this.websocket === null) {
       await this.connect();
+    } else {
+      await this.connectionComplete;
     }
     this.websocket.send(JSON.stringify(request));
     this.listeners.push({
