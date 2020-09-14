@@ -121,6 +121,7 @@ describe("useRealtimeResource", () => {
         list_id: 1,
         message: "sup",
       },
+      group_key_value: 1,
     };
     act(() => {
       ws.send(JSON.stringify(update));
@@ -149,6 +150,7 @@ describe("useRealtimeResource", () => {
         list_id: 1,
         message: "world",
       },
+      group_key_value: 1,
     };
     act(() => {
       ws.send(JSON.stringify(update));
@@ -177,6 +179,7 @@ describe("useRealtimeResource", () => {
         list_id: 1,
         message: "third",
       },
+      group_key_value: 1,
     };
     act(() => {
       ws.send(JSON.stringify(update));
@@ -205,6 +208,7 @@ describe("useRealtimeResource", () => {
         list_id: 2,
         message: "BLAH",
       },
+      group_key_value: 2,
     };
     act(() => {
       ws.send(JSON.stringify(update));

@@ -31,8 +31,7 @@ class WebsocketManager {
           const relevantListeners = this.listeners.filter(
             (listener) =>
               listener.request.model === update.model &&
-              update.instance[listener.request.property || "id"] ===
-                listener.request.value
+              update.group_key_value === listener.request.value
           );
           relevantListeners.forEach((listener) =>
             listener.notify.current(update)

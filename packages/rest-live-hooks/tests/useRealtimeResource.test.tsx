@@ -105,6 +105,7 @@ describe("useRealtimeResource", () => {
         id: 1,
         message: "hello",
       },
+      group_key_value: 1,
     };
     act(() => {
       ws.send(JSON.stringify(update));

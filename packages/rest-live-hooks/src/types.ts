@@ -18,4 +18,5 @@ export type ResourceUpdate<R extends Identifiable> = {
   action: Action;
   model: string;
   instance: R;
+  group_key_value: string | number;
 };
