@@ -89,4 +89,4 @@ export const takeTicket = (() => {
   let count = 0;
   return () => count++;
 })();
-export const websocket = new WebsocketManager("/ws/subscribe/");
+export const websocket = new WebsocketManager("/api/ws/subscribe/");
