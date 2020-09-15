@@ -11,7 +11,7 @@ export type mutateResourceOptions = {
 };
 
 export type mutateResourceFunction<T> = (
-  patchedResource?: Partial<T>,
+  patchedResource: Partial<T> | null,
   options?: mutateResourceOptions
 ) => Promise<T | undefined>;
 

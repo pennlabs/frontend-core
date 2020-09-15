@@ -9,7 +9,7 @@ import { Identifiable, Identifier } from "./types";
 export function patchInList<T extends Identifiable>(
   list: T[],
   id: Identifier,
-  patch: Partial<T> | null
+  patch?: Partial<T>
 ): [T[], boolean] {
   for (let i = 0; i < list.length; i += 1) {
     const obj = list[i];

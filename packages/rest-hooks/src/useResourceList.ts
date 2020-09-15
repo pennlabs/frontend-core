@@ -4,19 +4,28 @@ import {
   mutateResourceListOptions,
   useResourceListResponse,
 } from "./types";
+import { useContext } from "react";
 import useSWR, { ConfigInterface } from "swr";
 import { patchInList } from "./utils";
 import { doApiRequest } from "./fetching";
+import { GlobalConfigContext, getBestFetcher } from "./globalConfig";
 
 function useResourceList<R extends Identifiable>(
   listUrl: string | (() => string),
-  getResourceUrl: (id: Identifier) => string,
+  getResourceUrl: (id?: Identifier) => string,
   config?: ConfigInterface<R[]>
 ): useResourceListResponse<R> {
-  const { data, error, isValidating, mutate } = useSWR(listUrl, config);
+  const globalConfig = useContext(GlobalConfigContext);
+
+  const fetcher = getBestFetcher(config, globalConfig);
+
+  const { data, error, isValidating, mutate } = useSWR(listUrl, {
+    ...config,
+    fetcher,
+  });
   const mutateWithAPI = async (
     id?: Identifier,
-    patchedResource?: Partial<R> | null,
+    patchedResource?: Partial<R>,
     options: mutateResourceListOptions<R> = {}
   ) => {
     const {

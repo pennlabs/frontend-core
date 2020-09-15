@@ -1,16 +1,23 @@
+import { useContext } from "react";
 import useSWR, { ConfigInterface } from "swr";
 import { mutateResourceOptions, useResourceResponse } from "./types";
 import { doApiRequest } from "./fetching";
+import { GlobalConfigContext, getBestFetcher } from "./globalConfig";
 
 function useResource<R>(
   url: string,
   config?: ConfigInterface<R>
 ): useResourceResponse<R> {
+  const globalConfig = useContext(GlobalConfigContext);
+
+  const fetcher = getBestFetcher(config, globalConfig);
+
   const { data, error, isValidating, mutate } = useSWR(url, {
     ...config,
+    fetcher,
   });
   const mutateWithAPI = async (
-    patchedResource?: Partial<R>,
+    patchedResource: Partial<R> | null,
     options: mutateResourceOptions = {}
   ) => {
     const { method = "PATCH", sendRequest = true, revalidate = true } = options;

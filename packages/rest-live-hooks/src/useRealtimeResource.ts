@@ -1,6 +1,5 @@
 import {
   Identifiable,
-  Identifier,
   useResource,
   useResourceResponse,
 } from "@pennlabs/rest-hooks";
@@ -16,22 +15,25 @@ function useRealtimeResource<R extends Identifiable>(
 ): useResourceResponse<R> {
   const response = useResource(url, config);
   const { mutate } = response;
-  const callbackRef = useRef<(update: ResourceUpdate<R>) => Promise<R>>();
-
-  callbackRef.current = async (update: ResourceUpdate<R>) => {
-    const mutateOptions = { sendRequest: false, revalidate: false };
-    switch (update.action) {
-      case Action.CREATED:
-        // This case shouldn't be hit: you should never subscribe to updates
-        // on an instance that hasn't yet been created
-        break;
-      case Action.UPDATED:
-        return mutate(update.instance, mutateOptions);
-      // How do we want to handle deletion of a single object?
-      case Action.DELETED:
-        return mutate(null, mutateOptions);
+  const callbackRef = useRef<(update: ResourceUpdate<R>) => Promise<void>>(
+    async (update: ResourceUpdate<R>) => {
+      const mutateOptions = { sendRequest: false, revalidate: false };
+      switch (update.action) {
+        case Action.CREATED:
+          // This case shouldn't be hit: you should never subscribe to updates
+          // on an instance that hasn't yet been created
+          break;
+        case Action.UPDATED:
+          mutate(update.instance, mutateOptions);
+          break;
+        // How do we want to handle deletion of a single object?
+        case Action.DELETED:
+          mutate(null, mutateOptions);
+          break;
+      }
     }
-  };
+  );
+
   useEffect(() => {
     const uuid = takeTicket();
     websocket.subscribe(subscribeRequest, callbackRef, uuid).then();

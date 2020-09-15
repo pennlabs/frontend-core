@@ -15,34 +15,40 @@ function useRealtimeResourceList<R extends Identifiable, K extends keyof R>(
   subscribeRequest: SubscribeRequest<R, K>,
   config?: ConfigInterface<R[]> & { orderBy?: (a: R, b: R) => number }
 ): useResourceListResponse<R> {
-  const { orderBy } = config;
-  delete config.orderBy;
+  const orderBy = config?.orderBy;
+  if (config) {
+    delete config.orderBy;
+  }
 
   const response = useResourceList(listUrl, getResourceUrl, config);
   const { mutate } = response;
-  const callbackRef = useRef<(update: ResourceUpdate<R>) => Promise<R[]>>();
-
-  callbackRef.current = async (update: ResourceUpdate<R>) => {
-    switch (update.action) {
-      case Action.CREATED:
-        return mutate(update.instance.id, update.instance, {
-          sendRequest: false,
-          revalidate: false,
-          append: true,
-          sortBy: orderBy,
-        });
-      case Action.UPDATED:
-        return mutate(update.instance.id, update.instance, {
-          sendRequest: false,
-          revalidate: false,
-        });
-      case Action.DELETED:
-        return mutate(update.instance.id, null, {
-          sendRequest: false,
-          revalidate: false,
-        });
+  const callbackRef = useRef<(update: ResourceUpdate<R>) => Promise<void>>(
+    async (update: ResourceUpdate<R>) => {
+      switch (update.action) {
+        case Action.CREATED:
+          mutate(update.instance.id, update.instance, {
+            sendRequest: false,
+            revalidate: false,
+            append: true,
+            sortBy: orderBy,
+          });
+          break;
+        case Action.UPDATED:
+          mutate(update.instance.id, update.instance, {
+            sendRequest: false,
+            revalidate: false,
+          });
+          break;
+        case Action.DELETED:
+          mutate(update.instance.id, null, {
+            sendRequest: false,
+            revalidate: false,
+          });
+          break;
+      }
+      return;
     }
-  };
+  );
 
   useEffect(() => {
     const uuid = takeTicket();

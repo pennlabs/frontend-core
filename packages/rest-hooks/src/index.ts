@@ -1,5 +1,6 @@
 import useResource from "./useResource";
 import useResourceList from "./useResourceList";
+import { GlobalConfig } from "./globalConfig";
 import {
   useResourceListResponse,
   useResourceResponse,
@@ -10,6 +11,7 @@ import {
 export {
   useResource,
   useResourceList,
+  GlobalConfig,
   Identifiable,
   Identifier,
   useResourceListResponse,

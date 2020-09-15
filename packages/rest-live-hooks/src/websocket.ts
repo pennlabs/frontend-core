@@ -20,7 +20,7 @@ class WebsocketManager {
 
   connect(): Promise<void> {
     const url = SITE_ORIGIN() + this.url;
-    return new Promise<void>((resolve, reject) => {
+    return new Promise<void>((resolve, _reject) => {
       this.websocket = new WebSocket(url);
       this.websocket.onerror = () => {};
       this.websocket.onclose = () => {};
@@ -55,13 +55,15 @@ class WebsocketManager {
 
   reset() {
     this.listeners = [];
-    this.websocket.close();
-    this.websocket = null;
+    if (this.websocket) {
+      this.websocket.close();
+      this.websocket = null;
+    }
   }
 
   async subscribe<T extends Identifiable>(
     request: SubscribeRequest<T>,
-    notify: MutableRefObject<(update: ResourceUpdate<T>) => Promise<T[] | T>>,
+    notify: MutableRefObject<(update: ResourceUpdate<T>) => Promise<void>>,
     uuid: number
   ) {
     if (this.websocket === null) {
@@ -69,7 +71,9 @@ class WebsocketManager {
     } else {
       await this.connectionComplete;
     }
-    this.websocket.send(JSON.stringify(request));
+
+    // this.websocket is non-null since connection has completed
+    this.websocket!.send(JSON.stringify(request));
     this.listeners.push({
       request: request,
       notify,
@@ -78,7 +82,17 @@ class WebsocketManager {
   }
 
   unsubscribe(uuid: number) {
-    const request = this.listeners.find((l) => l.uuid === uuid).request;
+    if (!this.websocket) {
+      throw new Error(
+        "Unsubscribe cannot be called if no connection has been established"
+      );
+    }
+    const listener = this.listeners.find((l) => l.uuid == uuid);
+    if (!listener) {
+      throw new Error("invalid uuid");
+    }
+
+    const request = listener.request;
     this.websocket.send(JSON.stringify({ ...request, unsubscribe: true }));
     this.listeners = this.listeners.filter((l) => l.uuid !== uuid);
   }
