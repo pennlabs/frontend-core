@@ -4,6 +4,7 @@ import React, {
   createContext,
   ReactNode,
   useState,
+  useEffect,
 } from "react";
 import ReconnectingWebSocket from "reconnecting-websocket";
 import { ResourceUpdate, RevalidationUpdate, SubscribeRequest } from "./types";
@@ -31,6 +32,13 @@ export function RLHInstance({ children }: { children: ReactNode }) {
     new WebsocketManager("/api/ws/subscribe/", setIsConnected)
   );
 
+  useEffect(() => {
+    websocketRef.current.connect();
+    return () => {
+      websocketRef.current.reset();
+    };
+  }, []);
+
   return (
     <RLHContext.Provider
       value={{ websocket: websocketRef.current, isConnected }}
@@ -43,75 +51,60 @@ export function RLHInstance({ children }: { children: ReactNode }) {
 class WebsocketManager {
   private listeners: UpdateListener[];
   private websocket: ReconnectingWebSocket | null;
-  private connectionComplete: Promise<boolean>;
-  private setConnected: (value?: boolean | PromiseLike<boolean>) => void;
   private readonly url: string;
   private isConnectedCallback: (isConnected: boolean) => any;
 
-  connect(): Promise<void> {
+  connect() {
     const url = SITE_ORIGIN() + this.url;
-    return new Promise<void>((resolve, _reject) => {
-      this.websocket = new ReconnectingWebSocket(url);
-      this.websocket.addEventListener("message", (event: MessageEvent) => {
-        const message = JSON.parse(event.data);
-        if (message.model) {
-          const update = message as ResourceUpdate<any>;
-          const relevantListeners = this.listeners.filter(
-            (listener) =>
-              listener.request.model === update.model &&
-              update.group_key_value === listener.request.value
-          );
-          relevantListeners.forEach((listener) =>
-            listener.notify.current(update)
-          );
-        }
+    this.websocket = new ReconnectingWebSocket(url);
+    this.websocket.addEventListener("message", (event: MessageEvent) => {
+      const message = JSON.parse(event.data);
+      if (message.model) {
+        const update = message as ResourceUpdate<any>;
+        const relevantListeners = this.listeners.filter(
+          (listener) =>
+            listener.request.model === update.model &&
+            update.group_key_value === listener.request.value
+        );
+        relevantListeners.forEach((listener) =>
+          listener.notify.current(update)
+        );
+      }
+    });
+
+    // Closed/Error event handlers set connectionComplete to be a promise
+    // that won't resolve until the connection is reopened to prevent
+    // subscriptions from going through until the connection has been opened.
+    //
+    // NOTE: This is necessary since the subscribe request will fail
+    // since it calls send directly on the socket connection which will
+    // throw an error.
+
+    this.websocket.addEventListener("error", () => {
+      this.isConnectedCallback(false);
+    });
+
+    this.websocket.addEventListener("close", () => {
+      this.isConnectedCallback(false);
+    });
+
+    this.websocket.addEventListener("open", () => {
+      // NOTE: This operates under the assumption that no subscription will
+      // arrive before open is done iterating through the listeners, since
+      // buffered messages will be sent twice otherwise
+
+      this.listeners.forEach((listener) => {
+        listener.notify.current({ action: "REVALIDATE" });
+        // if websocket is open then it cannot be null
+        this.websocket!.send(JSON.stringify(listener.request));
       });
-
-      // Closed/Error event handlers set connectionComplete to be a promise
-      // that won't resolve until the connection is reopened to prevent
-      // subscriptions from going through until the connection has been opened.
-      //
-      // NOTE: This is necessary since the subscribe request will fail
-      // since it calls send directly on the socket connection which will
-      // throw an error.
-
-      this.websocket.addEventListener("error", () => {
-        this.isConnectedCallback(false);
-        this.connectionComplete = new Promise<boolean>((resolve) => {
-          this.setConnected = resolve;
-        });
-      });
-
-      this.websocket.addEventListener("close", () => {
-        this.isConnectedCallback(false);
-        this.connectionComplete = new Promise<boolean>((resolve) => {
-          this.setConnected = resolve;
-        });
-      });
-
-      this.websocket.addEventListener("open", () => {
-        // NOTE: This operates under the assumption that no subscription will
-        // arrive before open is done iterating through the listeners, since
-        // buffered messages will be sent twice otherwise
-
-        this.listeners.forEach((listener) => {
-          listener.notify.current({ action: "REVALIDATE" });
-          // if websocket is open then it cannot be null
-          this.websocket!.send(JSON.stringify(listener.request));
-        });
-        this.isConnectedCallback(true);
-        this.setConnected(true);
-        resolve();
-      });
+      this.isConnectedCallback(true);
     });
   }
   constructor(url: string, isConnectedCallback: (isConnected: boolean) => any) {
     this.listeners = [];
     this.websocket = null;
     this.url = url;
-    this.connectionComplete = new Promise<boolean>((resolve) => {
-      this.setConnected = resolve;
-    });
     this.isConnectedCallback = isConnectedCallback;
   }
 
@@ -130,14 +123,13 @@ class WebsocketManager {
     >,
     uuid: number
   ) {
-    if (this.websocket === null) {
-      await this.connect();
-    } else {
-      await this.connectionComplete;
+    if (
+      this.websocket &&
+      this.websocket.readyState === ReconnectingWebSocket.OPEN
+    ) {
+      this.websocket.send(JSON.stringify(request));
     }
 
-    // this.websocket is non-null since connection has completed
-    this.websocket!.send(JSON.stringify(request));
     this.listeners.push({
       request: request,
       notify,
