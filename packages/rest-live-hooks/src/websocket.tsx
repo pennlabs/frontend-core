@@ -102,6 +102,7 @@ class WebsocketManager {
   reset() {
     this.listeners = [];
     if (this.websocket) {
+      this.isConnectedCallback = () => {};
       this.websocket.close();
       this.websocket = null;
     }
