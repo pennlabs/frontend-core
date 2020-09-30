@@ -72,14 +72,6 @@ class WebsocketManager {
       }
     });
 
-    // Closed/Error event handlers set connectionComplete to be a promise
-    // that won't resolve until the connection is reopened to prevent
-    // subscriptions from going through until the connection has been opened.
-    //
-    // NOTE: This is necessary since the subscribe request will fail
-    // since it calls send directly on the socket connection which will
-    // throw an error.
-
     this.websocket.addEventListener("error", () => {
       this.isConnectedCallback(false);
     });
@@ -89,14 +81,13 @@ class WebsocketManager {
     });
 
     this.websocket.addEventListener("open", () => {
-      // NOTE: This operates under the assumption that no subscription will
-      // arrive before open is done iterating through the listeners, since
-      // buffered messages will be sent twice otherwise
+      // NOTE: This operates under the assumption that no consumer will
+      // subscribe before the connection is open
 
       this.listeners.forEach((listener) => {
-        listener.notify.current({ action: "REVALIDATE" });
         // if websocket is open then it cannot be null
         this.websocket!.send(JSON.stringify(listener.request));
+        listener.notify.current({ action: "REVALIDATE" });
       });
       this.isConnectedCallback(true);
     });
