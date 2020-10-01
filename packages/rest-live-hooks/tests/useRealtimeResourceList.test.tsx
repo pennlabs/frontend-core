@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import { act, cleanup, render, waitForDomChange } from "@testing-library/react";
 import WS from "jest-websocket-mock";
 // @ts-ignore
@@ -6,7 +6,7 @@ import useRealtimeResourceList from "../src/useRealtimeResourceList";
 // @ts-ignore
 import { Action, ResourceUpdate, SubscribeRequest } from "../src/types";
 // @ts-ignore
-import { WebsocketProvider } from "../src/Websocket";
+import { WebsocketProvider, WSContext } from "../src/Websocket";
 
 let ws: WS;
 
@@ -237,5 +237,81 @@ describe("useRealtimeResource", () => {
       ws.send(JSON.stringify(update));
     });
     expect(container.firstChild.textContent).toBe("message: hello world");
+  });
+
+  test("should resend subscription and validate on reconnect", async () => {
+    let s1 = "hello";
+    let s2 = "world";
+
+    const stateFetcher = async (url: string): Promise<Elem[]> => [
+      {
+        list_id: 1,
+        id: 1,
+        message: s1,
+      },
+      {
+        list_id: 1,
+        id: 2,
+        message: s2,
+      },
+    ];
+    const num = 1;
+    const Page = () => {
+      const { isConnected } = useContext(WSContext);
+      const { data } = useRealtimeResourceList(
+        `/items-${num}/`,
+        (id) => `/items-${num}/${id}/`,
+        { model: MODEL, property: "list_id", value: 1 },
+        { fetcher: stateFetcher }
+      );
+      return (
+        <div>
+          <div>message: {data && data.map((e) => e.message).join(" ")}</div>
+          <div>
+            {isConnected === true ? "yes" : isConnected === false ? "no" : ""}
+          </div>
+        </div>
+      );
+    };
+    const { container } = render(
+      <WebsocketProvider
+        url="/api/ws/subscribe/"
+        options={{ maxReconnectionDelay: 50 }}
+      >
+        <Page />
+      </WebsocketProvider>
+    );
+    expect(container.firstChild.firstChild.textContent).toBe("message: ");
+    await waitForDomChange({ container });
+    await ws.connected;
+    await expect(ws).toReceiveMessage(
+      JSON.stringify({
+        model: MODEL,
+        property: "list_id",
+        value: 1,
+      } as SubscribeRequest<Elem>)
+    );
+    expect(container.firstChild.firstChild.textContent).toBe(
+      "message: hello world"
+    );
+
+    ws.server.clients().forEach((sock) => sock.close());
+    s1 = "bye";
+    s2 = "earth";
+
+    await ws.closed;
+    await ws.connected;
+    await waitForDomChange({ container });
+
+    await expect(ws).toReceiveMessage(
+      JSON.stringify({
+        model: MODEL,
+        property: "list_id",
+        value: 1,
+      } as SubscribeRequest<Elem>)
+    );
+    expect(container.firstChild.firstChild.textContent).toBe(
+      "message: bye earth"
+    );
   });
 });

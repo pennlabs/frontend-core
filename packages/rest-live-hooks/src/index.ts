@@ -1,10 +1,5 @@
 import useRealtimeResource from "./useRealtimeResource";
 import useRealtimeResourceList from "./useRealtimeResourceList";
-import { WebsocketProvider, WSContext } from "./Websocket";
+import { WebsocketProvider } from "./Websocket";
 
-export {
-  useRealtimeResource,
-  useRealtimeResourceList,
-  WebsocketProvider,
-  WSContext,
-};
+export { useRealtimeResource, useRealtimeResourceList, WebsocketProvider };
