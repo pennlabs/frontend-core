@@ -28,7 +28,11 @@ describe("WebsocketProvider", () => {
   test("should indicate connection", async () => {
     const Page = () => {
       const { isConnected } = useContext(RLHContext);
-      return <div>{isConnected ? "yes" : "no"}</div>;
+      return (
+        <div>
+          {isConnected === true ? "yes" : isConnected === false ? "no" : ""}
+        </div>
+      );
     };
     const { container } = render(
       <WebsocketProvider url="/api/ws/subscribe/">
@@ -42,7 +46,11 @@ describe("WebsocketProvider", () => {
   test("should indicate disconnect", async () => {
     const Page = () => {
       const { isConnected } = useContext(RLHContext);
-      return <div>{isConnected ? "yes" : "no"}</div>;
+      return (
+        <div>
+          {isConnected === true ? "yes" : isConnected === false ? "no" : ""}
+        </div>
+      );
     };
     const { container } = render(
       <WebsocketProvider url="/api/ws/subscribe/">
@@ -50,6 +58,7 @@ describe("WebsocketProvider", () => {
       </WebsocketProvider>
     );
     await ws.connected;
+    expect(container.firstChild.textContent).toBe("yes");
     ws.close();
     expect(container.firstChild.textContent).toBe("no");
   });
@@ -57,7 +66,11 @@ describe("WebsocketProvider", () => {
   test("should re-connect to websocket", async () => {
     const Page = () => {
       const { isConnected } = useContext(RLHContext);
-      return <div>{isConnected ? "yes" : "no"}</div>;
+      return (
+        <div>
+          {isConnected === true ? "yes" : isConnected === false ? "no" : ""}
+        </div>
+      );
     };
     const { container } = render(
       <WebsocketProvider url="/api/ws/subscribe/">
@@ -65,10 +78,14 @@ describe("WebsocketProvider", () => {
       </WebsocketProvider>
     );
     await ws.connected;
-    ws.close();
+    await act(async () => {
+      ws.close();
+    });
     expect(container.firstChild.textContent).toBe("no");
-    await ws.connected;
-    await waitForDomChange({ container });
-    expect(container.firstChild.textContent).toBe("yes");
+    await act(async () => {
+      await ws.connected;
+    });
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    await expect(container.firstChild.textContent).toBe("yes");
   });
 });
