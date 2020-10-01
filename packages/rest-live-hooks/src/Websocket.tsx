@@ -32,7 +32,11 @@ export function WebsocketProvider({
   children,
 }: PropsWithChildren<{ url: string }>) {
   const [isConnected, setIsConnected] = useState(true);
-  const websocketRef = useRef(new WebsocketManager(url, setIsConnected));
+  const setIsConnectedRef = useRef<
+    React.Dispatch<React.SetStateAction<boolean>>
+  >();
+  setIsConnectedRef.current = setIsConnected;
+  const websocketRef = useRef(new WebsocketManager(url, setIsConnectedRef));
 
   useEffect(() => {
     websocketRef.current.connect();
@@ -54,10 +58,12 @@ class WebsocketManager {
   private listeners: UpdateListener[];
   private websocket: ReconnectingWebSocket | null;
   private readonly url: string;
-  private isConnectedCallback: (isConnected: boolean) => any;
+  private isConnectedCallback: MutableRefObject<
+    (isConnected: boolean) => any
+  > | null;
 
   setDisconnected = () => {
-    this.isConnectedCallback(false);
+    this.isConnectedCallback?.current(false);
   };
 
   onOpen = () => {
@@ -68,7 +74,7 @@ class WebsocketManager {
       this.websocket!.send(JSON.stringify(listener.request));
       listener.notify.current({ action: "REVALIDATE" });
     });
-    this.isConnectedCallback(true);
+    this.isConnectedCallback?.current(true);
   };
 
   onMessage = (event: MessageEvent) => {
@@ -92,7 +98,10 @@ class WebsocketManager {
     this.websocket.addEventListener("close", this.setDisconnected);
     this.websocket.addEventListener("open", this.onOpen);
   }
-  constructor(url: string, isConnectedCallback: (isConnected: boolean) => any) {
+  constructor(
+    url: string,
+    isConnectedCallback: MutableRefObject<(isConnected: boolean) => any>
+  ) {
     this.listeners = [];
     this.websocket = null;
     this.url = url;
@@ -100,7 +109,7 @@ class WebsocketManager {
   }
 
   reset() {
-    this.isConnectedCallback = () => {};
+    this.isConnectedCallback = null;
   }
 
   async subscribe<T extends Identifiable>(
