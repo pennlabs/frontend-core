@@ -12,7 +12,7 @@ import {
   SubscribeRequest,
   RevalidationUpdate,
 } from "./types";
-import { takeTicket, RLHContext } from "./websocket";
+import { takeTicket, RLHContext } from "./Websocket";
 
 interface useRealtimeResourceListResponse<R extends Identifiable>
   extends useResourceListResponse<R> {
@@ -28,7 +28,9 @@ function useRealtimeResourceList<R extends Identifiable, K extends keyof R>(
   const contextProps = useContext(RLHContext);
 
   if (!contextProps) {
-    throw new Error("useRealtimeResourceList must be used with an RLHInstance");
+    throw new Error(
+      "useRealtimeResourceList must be used with an WebsocketProvider"
+    );
   }
 
   const { websocket, isConnected } = contextProps;

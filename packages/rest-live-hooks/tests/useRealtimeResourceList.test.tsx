@@ -6,7 +6,7 @@ import useRealtimeResourceList from "../src/useRealtimeResourceList";
 // @ts-ignore
 import { Action, ResourceUpdate, SubscribeRequest } from "../src/types";
 // @ts-ignore
-import { websocket } from "../src/websocket";
+import { WebsocketProvider } from "../src/Websocket";
 
 let ws: WS;
 
@@ -36,7 +36,6 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   WS.clean();
-  websocket.reset();
 });
 
 jest.mock("../src/findOrigin", () => ({
@@ -55,7 +54,11 @@ describe("useRealtimeResource", () => {
       );
       return <div>message: {data && data.map((e) => e.message).join(" ")}</div>;
     };
-    const { container } = render(<Page />);
+    const { container } = render(
+      <WebsocketProvider url="/api/ws/subscribe/">
+        <Page />
+      </WebsocketProvider>
+    );
     expect(container.firstChild.textContent).toBe("message: ");
     await waitForDomChange({ container });
     await ws.connected;
@@ -80,7 +83,11 @@ describe("useRealtimeResource", () => {
       );
       return <div>message: {data && data.map((e) => e.message).join(" ")}</div>;
     };
-    const { unmount } = render(<Page />);
+    const { unmount } = render(
+      <WebsocketProvider url="/api/ws/subscribe/">
+        <Page />
+      </WebsocketProvider>
+    );
     await ws.connected;
     await expect(ws).toReceiveMessage(
       JSON.stringify({
@@ -111,7 +118,11 @@ describe("useRealtimeResource", () => {
       );
       return <div>message: {data && data.map((e) => e.message).join(" ")}</div>;
     };
-    const { container } = render(<Page />);
+    const { container } = render(
+      <WebsocketProvider url="/api/ws/subscribe/">
+        <Page />
+      </WebsocketProvider>
+    );
     await ws.connected; // test will time out if connection fails.
     const update: ResourceUpdate<Elem> = {
       model: MODEL,
@@ -140,7 +151,11 @@ describe("useRealtimeResource", () => {
       );
       return <div>message: {data && data.map((e) => e.message).join(" ")}</div>;
     };
-    const { container } = render(<Page />);
+    const { container } = render(
+      <WebsocketProvider url="/api/ws/subscribe/">
+        <Page />
+      </WebsocketProvider>
+    );
     await ws.connected; // test will time out if connection fails.
     const update: ResourceUpdate<Elem> = {
       model: MODEL,
@@ -169,7 +184,11 @@ describe("useRealtimeResource", () => {
       );
       return <div>message: {data && data.map((e) => e.message).join(" ")}</div>;
     };
-    const { container } = render(<Page />);
+    const { container } = render(
+      <WebsocketProvider url="/api/ws/subscribe/">
+        <Page />
+      </WebsocketProvider>
+    );
     await ws.connected; // test will time out if connection fails.
     const update: ResourceUpdate<Elem> = {
       model: MODEL,
@@ -198,7 +217,11 @@ describe("useRealtimeResource", () => {
       );
       return <div>message: {data && data.map((e) => e.message).join(" ")}</div>;
     };
-    const { container } = render(<Page />);
+    const { container } = render(
+      <WebsocketProvider url="/api/ws/subscribe/">
+        <Page />
+      </WebsocketProvider>
+    );
     await ws.connected; // test will time out if connection fails.
     const update: ResourceUpdate<Elem> = {
       model: MODEL,

@@ -1,5 +1,5 @@
 import useRealtimeResource from "./useRealtimeResource";
 import useRealtimeResourceList from "./useRealtimeResourceList";
-import { RLHInstance } from "./websocket";
+import { WebsocketProvider } from "./Websocket";
 
-export { useRealtimeResource, useRealtimeResourceList, RLHInstance };
+export { useRealtimeResource, useRealtimeResourceList, WebsocketProvider };

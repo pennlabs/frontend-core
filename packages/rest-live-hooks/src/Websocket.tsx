@@ -5,6 +5,7 @@ import React, {
   ReactNode,
   useState,
   useEffect,
+  PropsWithChildren,
 } from "react";
 import ReconnectingWebSocket from "reconnecting-websocket";
 import { ResourceUpdate, RevalidationUpdate, SubscribeRequest } from "./types";
@@ -26,11 +27,12 @@ export type RLHContextProps = {
 
 export const RLHContext = createContext<RLHContextProps | undefined>(undefined);
 
-export function RLHInstance({ children }: { children: ReactNode }) {
+export function WebsocketProvider({
+  url,
+  children,
+}: PropsWithChildren<{ url: string }>) {
   const [isConnected, setIsConnected] = useState(true);
-  const websocketRef = useRef(
-    new WebsocketManager("/api/ws/subscribe/", setIsConnected)
-  );
+  const websocketRef = useRef(new WebsocketManager(url, setIsConnected));
 
   useEffect(() => {
     websocketRef.current.connect();
@@ -54,43 +56,41 @@ class WebsocketManager {
   private readonly url: string;
   private isConnectedCallback: (isConnected: boolean) => any;
 
+  setDisconnected = () => {
+    this.isConnectedCallback(false);
+  };
+
+  onOpen = () => {
+    // NOTE: This operates under the assumption that no consumer will
+    // subscribe before the connection is open
+    this.listeners.forEach((listener) => {
+      // if websocket is open then it cannot be null
+      this.websocket!.send(JSON.stringify(listener.request));
+      listener.notify.current({ action: "REVALIDATE" });
+    });
+    this.isConnectedCallback(true);
+  };
+
+  onMessage = (event: MessageEvent) => {
+    const message = JSON.parse(event.data);
+    if (message.model) {
+      const update = message as ResourceUpdate<any>;
+      const relevantListeners = this.listeners.filter(
+        (listener) =>
+          listener.request.model === update.model &&
+          update.group_key_value === listener.request.value
+      );
+      relevantListeners.forEach((listener) => listener.notify.current(update));
+    }
+  };
   connect() {
     const url = SITE_ORIGIN() + this.url;
     this.websocket = new ReconnectingWebSocket(url);
-    this.websocket.addEventListener("message", (event: MessageEvent) => {
-      const message = JSON.parse(event.data);
-      if (message.model) {
-        const update = message as ResourceUpdate<any>;
-        const relevantListeners = this.listeners.filter(
-          (listener) =>
-            listener.request.model === update.model &&
-            update.group_key_value === listener.request.value
-        );
-        relevantListeners.forEach((listener) =>
-          listener.notify.current(update)
-        );
-      }
-    });
 
-    this.websocket.addEventListener("error", () => {
-      this.isConnectedCallback(false);
-    });
-
-    this.websocket.addEventListener("close", () => {
-      this.isConnectedCallback(false);
-    });
-
-    this.websocket.addEventListener("open", () => {
-      // NOTE: This operates under the assumption that no consumer will
-      // subscribe before the connection is open
-
-      this.listeners.forEach((listener) => {
-        // if websocket is open then it cannot be null
-        this.websocket!.send(JSON.stringify(listener.request));
-        listener.notify.current({ action: "REVALIDATE" });
-      });
-      this.isConnectedCallback(true);
-    });
+    this.websocket.addEventListener("message", this.onMessage);
+    this.websocket.addEventListener("error", this.setDisconnected);
+    this.websocket.addEventListener("close", this.setDisconnected);
+    this.websocket.addEventListener("open", this.onOpen);
   }
   constructor(url: string, isConnectedCallback: (isConnected: boolean) => any) {
     this.listeners = [];
@@ -100,12 +100,7 @@ class WebsocketManager {
   }
 
   reset() {
-    this.listeners = [];
-    if (this.websocket) {
-      this.isConnectedCallback = () => {};
-      this.websocket.close();
-      this.websocket = null;
-    }
+    this.isConnectedCallback = () => {};
   }
 
   async subscribe<T extends Identifiable>(
@@ -130,7 +125,7 @@ class WebsocketManager {
   }
 
   unsubscribe(uuid: number) {
-    if (!this.websocket) {
+    if (this.websocket === null) {
       throw new Error(
         "Unsubscribe cannot be called if no connection has been established"
       );
