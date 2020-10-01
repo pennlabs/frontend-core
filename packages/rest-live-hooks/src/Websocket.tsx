@@ -2,7 +2,6 @@ import React, {
   useRef,
   MutableRefObject,
   createContext,
-  ReactNode,
   useState,
   useEffect,
   PropsWithChildren,
@@ -20,12 +19,12 @@ type UpdateListener = {
   uuid: number;
 };
 
-export type RLHContextProps = {
+export type WSContextProps = {
   websocket: WebsocketManager;
   isConnected: boolean;
 };
 
-export const RLHContext = createContext<RLHContextProps | undefined>(undefined);
+export const WSContext = createContext<WSContextProps | undefined>(undefined);
 
 export function WebsocketProvider({
   url,
@@ -33,12 +32,8 @@ export function WebsocketProvider({
   children,
 }: PropsWithChildren<{ url: string; options?: Partial<Options> }>) {
   const [isConnected, setIsConnected] = useState(true);
-  const setIsConnectedRef = useRef<
-    React.Dispatch<React.SetStateAction<boolean>>
-  >();
-  setIsConnectedRef.current = setIsConnected;
   const websocketRef = useRef(
-    new WebsocketManager(url, setIsConnectedRef, options)
+    new WebsocketManager(url, setIsConnected, options)
   );
 
   useEffect(() => {
@@ -49,11 +44,11 @@ export function WebsocketProvider({
   }, []);
 
   return (
-    <RLHContext.Provider
+    <WSContext.Provider
       value={{ websocket: websocketRef.current, isConnected }}
     >
       {children}
-    </RLHContext.Provider>
+    </WSContext.Provider>
   );
 }
 
@@ -61,16 +56,13 @@ class WebsocketManager {
   private listeners: UpdateListener[];
   private websocket: ReconnectingWebSocket | null;
   private readonly url: string;
-  private isConnectedCallback: MutableRefObject<
-    (isConnected: boolean) => any
-  > | null;
+  private isConnectedCallback: (isConnected: boolean) => any;
   private readonly wsOptions: Partial<Options>;
 
   connect() {
     const url = SITE_ORIGIN() + this.url;
     this.websocket = new ReconnectingWebSocket(url, undefined, {
       ...this.wsOptions,
-      debug: true,
     });
 
     this.websocket.addEventListener("message", (event: MessageEvent) => {
@@ -87,11 +79,11 @@ class WebsocketManager {
         );
       }
     });
-    this.websocket.addEventListener("error", (e) => {
-      this.isConnectedCallback?.current(false);
+    this.websocket.addEventListener("error", () => {
+      this.isConnectedCallback(false);
     });
     this.websocket.addEventListener("close", () => {
-      this.isConnectedCallback?.current(false);
+      this.isConnectedCallback(false);
     });
     this.websocket.addEventListener("open", () => {
       // NOTE: This operates under the assumption that no consumer will
@@ -101,12 +93,12 @@ class WebsocketManager {
         this.websocket!.send(JSON.stringify(listener.request));
         listener.notify.current({ action: "REVALIDATE" });
       });
-      this.isConnectedCallback?.current(true);
+      this.isConnectedCallback(true);
     });
   }
   constructor(
     url: string,
-    isConnectedCallback: MutableRefObject<(isConnected: boolean) => any>,
+    isConnectedCallback: (isConnected: boolean) => any,
     options?: Partial<Options>
   ) {
     this.listeners = [];
@@ -117,7 +109,7 @@ class WebsocketManager {
   }
 
   reset() {
-    this.isConnectedCallback = null;
+    this.isConnectedCallback = () => {};
   }
 
   async subscribe<T extends Identifiable>(

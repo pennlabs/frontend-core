@@ -2,7 +2,7 @@ import React, { useContext } from "react";
 import { act, cleanup, render, waitForDomChange } from "@testing-library/react";
 import WS from "jest-websocket-mock";
 // @ts-ignore
-import { WebsocketProvider, RLHContext } from "../src/Websocket";
+import { WebsocketProvider, WSContext } from "../src/Websocket";
 
 let ws: WS;
 
@@ -23,7 +23,7 @@ jest.mock("../src/findOrigin", () => ({
 describe("WebsocketProvider", () => {
   test("should indicate connection", async () => {
     const Page = () => {
-      const { isConnected } = useContext(RLHContext);
+      const { isConnected } = useContext(WSContext);
       return (
         <div>
           {isConnected === true ? "yes" : isConnected === false ? "no" : ""}
@@ -41,7 +41,7 @@ describe("WebsocketProvider", () => {
 
   test("should indicate disconnect", async () => {
     const Page = () => {
-      const { isConnected } = useContext(RLHContext);
+      const { isConnected } = useContext(WSContext);
       return (
         <div>
           {isConnected === true ? "yes" : isConnected === false ? "no" : ""}
@@ -62,7 +62,7 @@ describe("WebsocketProvider", () => {
 
   test("should re-connect to websocket", async () => {
     const Page = () => {
-      const { isConnected } = useContext(RLHContext);
+      const { isConnected } = useContext(WSContext);
       return (
         <div>
           {isConnected === true ? "yes" : isConnected === false ? "no" : ""}
@@ -72,18 +72,18 @@ describe("WebsocketProvider", () => {
     const { container } = render(
       <WebsocketProvider
         url="/api/ws/subscribe/"
-        options={{ maxReconnectionDelay: 50, debug: true }}
+        options={{ maxReconnectionDelay: 50 }}
       >
         <Page />
       </WebsocketProvider>
     );
     await ws.connected;
-    await expect(container.firstChild.textContent).toBe("yes");
+    expect(container.firstChild.textContent).toBe("yes");
     ws.server.clients().forEach((sock) => sock.close());
     await ws.closed;
     expect(container.firstChild.textContent).toBe("no");
     await ws.connected;
     await waitForDomChange({ container });
-    await expect(container.firstChild.textContent).toBe("yes");
+    expect(container.firstChild.textContent).toBe("yes");
   });
 });

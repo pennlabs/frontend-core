@@ -11,7 +11,7 @@ import {
   SubscribeRequest,
   RevalidationUpdate,
 } from "./types";
-import { takeTicket, RLHContext } from "./Websocket";
+import { takeTicket, WSContext } from "./Websocket";
 
 interface useRealtimeResourceResponse<R> extends useResourceResponse<R> {
   isConnected: boolean;
@@ -22,7 +22,7 @@ function useRealtimeResource<R extends Identifiable>(
   subscribeRequest: SubscribeRequest<R>,
   config?: ConfigInterface<R>
 ): useRealtimeResourceResponse<R> {
-  const contextProps = useContext(RLHContext);
+  const contextProps = useContext(WSContext);
 
   if (!contextProps) {
     throw new Error(
