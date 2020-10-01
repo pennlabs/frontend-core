@@ -2,10 +2,6 @@ import React, { useContext } from "react";
 import { act, cleanup, render, waitForDomChange } from "@testing-library/react";
 import WS from "jest-websocket-mock";
 // @ts-ignore
-import useRealtimeResource from "../src/useRealtimeResource";
-// @ts-ignore
-import { Action, ResourceUpdate } from "../src/types";
-// @ts-ignore
 import { WebsocketProvider, RLHContext } from "../src/Websocket";
 
 let ws: WS;
@@ -60,6 +56,7 @@ describe("WebsocketProvider", () => {
     await ws.connected;
     expect(container.firstChild.textContent).toBe("yes");
     ws.close();
+    await ws.closed;
     expect(container.firstChild.textContent).toBe("no");
   });
 
@@ -73,19 +70,20 @@ describe("WebsocketProvider", () => {
       );
     };
     const { container } = render(
-      <WebsocketProvider url="/api/ws/subscribe/">
+      <WebsocketProvider
+        url="/api/ws/subscribe/"
+        options={{ maxReconnectionDelay: 50, debug: true }}
+      >
         <Page />
       </WebsocketProvider>
     );
     await ws.connected;
-    await act(async () => {
-      ws.close();
-    });
+    await expect(container.firstChild.textContent).toBe("yes");
+    ws.server.clients().forEach((sock) => sock.close());
+    await ws.closed;
     expect(container.firstChild.textContent).toBe("no");
-    await act(async () => {
-      await ws.connected;
-    });
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await ws.connected;
+    await waitForDomChange({ container });
     await expect(container.firstChild.textContent).toBe("yes");
   });
 });
