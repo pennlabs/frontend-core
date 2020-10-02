@@ -1,6 +1,7 @@
 import React, { useContext } from "react";
 import { act, cleanup, render, waitForDomChange } from "@testing-library/react";
 import WS from "jest-websocket-mock";
+import { cache } from "swr";
 // @ts-ignore
 import useRealtimeResource from "../src/useRealtimeResource";
 // @ts-ignore
@@ -26,6 +27,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  cache.clear();
   WS.clean();
 });
 
