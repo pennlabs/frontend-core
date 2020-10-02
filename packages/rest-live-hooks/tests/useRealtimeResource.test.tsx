@@ -1,12 +1,13 @@
-import React from "react";
+import React, { useContext } from "react";
 import { act, cleanup, render, waitForDomChange } from "@testing-library/react";
 import WS from "jest-websocket-mock";
+import { cache } from "swr";
 // @ts-ignore
 import useRealtimeResource from "../src/useRealtimeResource";
 // @ts-ignore
 import { Action, ResourceUpdate } from "../src/types";
 // @ts-ignore
-import { websocket } from "../src/websocket";
+import { WebsocketProvider, WSContext } from "../src/Websocket";
 
 let ws: WS;
 
@@ -26,8 +27,8 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  cache.clear();
   WS.clean();
-  websocket.reset();
 });
 
 jest.mock("../src/findOrigin", () => ({
@@ -44,7 +45,11 @@ describe("useRealtimeResource", () => {
       );
       return <div>message: {data && data.message}</div>;
     };
-    const { container } = render(<Page />);
+    const { container } = render(
+      <WebsocketProvider url="/api/ws/subscribe/">
+        <Page />
+      </WebsocketProvider>
+    );
     expect(container.firstChild.textContent).toBe("message: ");
     await waitForDomChange({ container });
     await ws.connected;
@@ -69,7 +74,11 @@ describe("useRealtimeResource", () => {
       );
       return <div>message: {data && data.message}</div>;
     };
-    const { container, unmount } = render(<Page />);
+    const { container, unmount } = render(
+      <WebsocketProvider url="/api/ws/subscribe/">
+        <Page />
+      </WebsocketProvider>
+    );
     await ws.connected;
     await expect(ws).toReceiveMessage(
       JSON.stringify({
@@ -96,7 +105,11 @@ describe("useRealtimeResource", () => {
       );
       return <div>message: {data && data.message}</div>;
     };
-    const { container } = render(<Page />);
+    const { container } = render(
+      <WebsocketProvider url="/api/ws/subscribe/">
+        <Page />
+      </WebsocketProvider>
+    );
     await ws.connected; // test will time out if connection fails.
     const update: ResourceUpdate<Elem> = {
       model: MODEL,
@@ -111,5 +124,62 @@ describe("useRealtimeResource", () => {
       ws.send(JSON.stringify(update));
     });
     expect(container.firstChild.textContent).toBe("message: hello");
+  });
+
+  test("should resend subscription and revalidate on reconnect", async () => {
+    let state = 0;
+    const stateFetcher = async () => ({
+      id: 1,
+      message: `hi${state}`,
+    });
+
+    const Page = () => {
+      const { isConnected } = useContext(WSContext);
+      const { data } = useRealtimeResource(
+        "/items/1/",
+        { model: MODEL, value: 1 },
+        { fetcher: stateFetcher }
+      );
+      return (
+        <div>
+          <div>message: {data && data.message}</div>
+          <div>
+            {isConnected === true ? "yes" : isConnected === false ? "no" : ""}
+          </div>
+        </div>
+      );
+    };
+    const { container } = render(
+      <WebsocketProvider
+        url="/api/ws/subscribe/"
+        options={{ maxReconnectionDelay: 50 }}
+      >
+        <Page />
+      </WebsocketProvider>
+    );
+    expect(container.firstChild.firstChild.textContent).toBe("message: ");
+    await waitForDomChange({ container });
+    await ws.connected;
+    await expect(ws).toReceiveMessage(
+      JSON.stringify({
+        model: MODEL,
+        value: 1,
+      })
+    );
+    expect(container.firstChild.firstChild.textContent).toBe("message: hi0");
+
+    ws.server.clients().forEach((sock) => sock.close());
+    state = 1;
+    await ws.closed;
+    await ws.connected;
+    await waitForDomChange({ container });
+
+    await expect(ws).toReceiveMessage(
+      JSON.stringify({
+        model: MODEL,
+        value: 1,
+      })
+    );
+    expect(container.firstChild.firstChild.textContent).toBe("message: hi1");
   });
 });

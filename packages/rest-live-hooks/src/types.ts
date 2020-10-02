@@ -5,6 +5,7 @@ export enum Action {
   UPDATED = "UPDATED",
   DELETED = "DELETED",
 }
+
 export type SubscribeRequest<
   R extends Identifiable,
   K extends keyof R = keyof R
@@ -19,4 +20,8 @@ export type ResourceUpdate<R extends Identifiable> = {
   model: string;
   instance: R;
   group_key_value: string | number;
+};
+
+export type RevalidationUpdate = {
+  action: "REVALIDATE";
 };

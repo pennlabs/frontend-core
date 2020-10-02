@@ -5,24 +5,50 @@ import {
   useResourceListResponse,
 } from "@pennlabs/rest-hooks";
 import { ConfigInterface } from "swr";
-import { useEffect, useRef } from "react";
-import { Action, ResourceUpdate, SubscribeRequest } from "./types";
-import { takeTicket, websocket } from "./websocket";
+import { useEffect, useRef, useContext } from "react";
+import {
+  Action,
+  ResourceUpdate,
+  SubscribeRequest,
+  RevalidationUpdate,
+} from "./types";
+import { takeTicket, WSContext } from "./Websocket";
+
+interface useRealtimeResourceListResponse<R extends Identifiable>
+  extends useResourceListResponse<R> {
+  isConnected: boolean;
+}
 
 function useRealtimeResourceList<R extends Identifiable, K extends keyof R>(
   listUrl: string | (() => string),
   getResourceUrl: (id: Identifier) => string,
   subscribeRequest: SubscribeRequest<R, K>,
   config?: ConfigInterface<R[]> & { orderBy?: (a: R, b: R) => number }
-): useResourceListResponse<R> {
-  const { orderBy } = config;
-  delete config.orderBy;
+): useRealtimeResourceListResponse<R> {
+  const contextProps = useContext(WSContext);
+
+  if (!contextProps) {
+    throw new Error(
+      "useRealtimeResourceList must be used with an WebsocketProvider"
+    );
+  }
+
+  const { websocket, isConnected } = contextProps;
+
+  const orderBy = config?.orderBy;
+  if (config) {
+    delete config.orderBy;
+  }
 
   const response = useResourceList(listUrl, getResourceUrl, config);
   const { mutate } = response;
-  const callbackRef = useRef<(update: ResourceUpdate<R>) => Promise<R[]>>();
+  const callbackRef = useRef<
+    (update: ResourceUpdate<R> | RevalidationUpdate) => Promise<R[]>
+  >();
 
-  callbackRef.current = async (update: ResourceUpdate<R>) => {
+  callbackRef.current = async (
+    update: ResourceUpdate<R> | RevalidationUpdate
+  ) => {
     switch (update.action) {
       case Action.CREATED:
         return mutate(update.instance.id, update.instance, {
@@ -41,6 +67,8 @@ function useRealtimeResourceList<R extends Identifiable, K extends keyof R>(
           sendRequest: false,
           revalidate: false,
         });
+      case "REVALIDATE":
+        return mutate(undefined, undefined, { sendRequest: false });
     }
   };
 
@@ -50,7 +78,7 @@ function useRealtimeResourceList<R extends Identifiable, K extends keyof R>(
     return () => websocket.unsubscribe(uuid);
   }, []);
 
-  return response;
+  return { isConnected, ...response };
 }
 
 export default useRealtimeResourceList;

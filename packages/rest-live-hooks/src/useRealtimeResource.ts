@@ -1,24 +1,46 @@
 import {
   Identifiable,
-  Identifier,
   useResource,
   useResourceResponse,
 } from "@pennlabs/rest-hooks";
 import { ConfigInterface } from "swr";
-import { useEffect, useRef } from "react";
-import { Action, ResourceUpdate, SubscribeRequest } from "./types";
-import { takeTicket, websocket } from "./websocket";
+import { useEffect, useRef, useContext } from "react";
+import {
+  Action,
+  ResourceUpdate,
+  SubscribeRequest,
+  RevalidationUpdate,
+} from "./types";
+import { takeTicket, WSContext } from "./Websocket";
+
+interface useRealtimeResourceResponse<R> extends useResourceResponse<R> {
+  isConnected: boolean;
+}
 
 function useRealtimeResource<R extends Identifiable>(
   url: string,
   subscribeRequest: SubscribeRequest<R>,
   config?: ConfigInterface<R>
-): useResourceResponse<R> {
+): useRealtimeResourceResponse<R> {
+  const contextProps = useContext(WSContext);
+
+  if (!contextProps) {
+    throw new Error(
+      "useRealtimeResource must be wrapped by an WebsocketProvider"
+    );
+  }
+
+  const { websocket, isConnected } = contextProps;
+
   const response = useResource(url, config);
   const { mutate } = response;
-  const callbackRef = useRef<(update: ResourceUpdate<R>) => Promise<R>>();
+  const callbackRef = useRef<
+    (update: ResourceUpdate<R> | RevalidationUpdate) => Promise<R>
+  >();
 
-  callbackRef.current = async (update: ResourceUpdate<R>) => {
+  callbackRef.current = async (
+    update: ResourceUpdate<R> | RevalidationUpdate
+  ) => {
     const mutateOptions = { sendRequest: false, revalidate: false };
     switch (update.action) {
       case Action.CREATED:
@@ -29,7 +51,9 @@ function useRealtimeResource<R extends Identifiable>(
         return mutate(update.instance, mutateOptions);
       // How do we want to handle deletion of a single object?
       case Action.DELETED:
-        return mutate(null, mutateOptions);
+        return mutate(undefined, mutateOptions);
+      case "REVALIDATE":
+        return mutate(undefined, { sendRequest: false });
     }
   };
   useEffect(() => {
@@ -38,7 +62,7 @@ function useRealtimeResource<R extends Identifiable>(
     return () => websocket.unsubscribe(uuid);
   }, []);
 
-  return response;
+  return { isConnected, ...response };
 }
 
 export default useRealtimeResource;
