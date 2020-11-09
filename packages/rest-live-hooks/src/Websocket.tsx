@@ -29,11 +29,16 @@ export const WSContext = createContext<WSContextProps | undefined>(undefined);
 export function WebsocketProvider({
   url,
   options,
+  findOrigin,
   children,
-}: PropsWithChildren<{ url: string; options?: Partial<Options> }>) {
+}: PropsWithChildren<{
+  url: string;
+  findOrigin?: () => string;
+  options?: Partial<Options>;
+}>) {
   const [isConnected, setIsConnected] = useState(true);
   const websocketRef = useRef(
-    new WebsocketManager(url, setIsConnected, options)
+    new WebsocketManager(url, setIsConnected, findOrigin, options)
   );
 
   useEffect(() => {
@@ -56,11 +61,12 @@ class WebsocketManager {
   private listeners: UpdateListener[];
   private websocket: ReconnectingWebSocket | null;
   private readonly url: string;
+  private readonly findOrigin: () => string;
   private isConnectedCallback: (isConnected: boolean) => any;
   private readonly wsOptions: Partial<Options>;
 
   connect() {
-    const url = SITE_ORIGIN() + this.url;
+    const url = this.findOrigin() + this.url;
     this.websocket = new ReconnectingWebSocket(url, undefined, {
       ...this.wsOptions,
     });
@@ -99,12 +105,14 @@ class WebsocketManager {
   constructor(
     url: string,
     isConnectedCallback: (isConnected: boolean) => any,
+    findOrigin?: () => string,
     options?: Partial<Options>
   ) {
     this.listeners = [];
     this.websocket = null;
     this.url = url;
     this.isConnectedCallback = isConnectedCallback;
+    this.findOrigin = findOrigin || SITE_ORIGIN;
     this.wsOptions = options || {};
   }
 
