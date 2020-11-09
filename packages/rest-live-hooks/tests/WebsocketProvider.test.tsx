@@ -21,6 +21,18 @@ jest.mock("../src/findOrigin", () => ({
 }));
 
 describe("WebsocketProvider", () => {
+  test("should use custom findOrigin if provided", async () => {
+    let customHost = "ws://localhost:8000";
+    let customWS = new WS(`${customHost}/api/ws/subscribe/`);
+    render(
+      <WebsocketProvider
+        url="/api/ws/subscribe/"
+        findOrigin={() => customHost}
+      />
+    );
+    await customWS.connected;
+  });
+
   test("should indicate connection", async () => {
     const Page = () => {
       const { isConnected } = useContext(WSContext);
