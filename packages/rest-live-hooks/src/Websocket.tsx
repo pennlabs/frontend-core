@@ -118,6 +118,7 @@ class WebsocketManager {
 
   reset() {
     this.isConnectedCallback = () => {};
+    this.websocket?.close();
   }
 
   async subscribe<T extends Identifiable>(

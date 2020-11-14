@@ -1,5 +1,11 @@
-import React, { useContext } from "react";
-import { act, cleanup, render, waitForDomChange } from "@testing-library/react";
+import React, { useContext, useState } from "react";
+import {
+  act,
+  cleanup,
+  render,
+  waitForDomChange,
+  fireEvent,
+} from "@testing-library/react";
 import WS from "jest-websocket-mock";
 import { cache } from "swr";
 // @ts-ignore
@@ -62,7 +68,7 @@ describe("useRealtimeResource", () => {
     expect(container.firstChild.textContent).toBe("message: hi");
   });
 
-  test("should unsubscribe on unmount", async () => {
+  test("should unsubscribe on hook unmount", async () => {
     const Page = () => {
       const { data } = useRealtimeResource(
         "/items/1/",
@@ -74,6 +80,50 @@ describe("useRealtimeResource", () => {
       );
       return <div>message: {data && data.message}</div>;
     };
+
+    const ProviderComponent = () => {
+      const [mount, setMount] = useState(true);
+      return (
+        <WebsocketProvider url="/api/ws/subscribe/">
+          <button onClick={() => setMount(false)}>Click</button>
+          {mount && <Page />}
+        </WebsocketProvider>
+      );
+    };
+
+    const { container, unmount, getByText } = render(<ProviderComponent />);
+    await ws.connected;
+    await expect(ws).toReceiveMessage(
+      JSON.stringify({
+        model: MODEL,
+        value: 1,
+      })
+    );
+
+    fireEvent.click(getByText("Click"));
+
+    await expect(ws).toReceiveMessage(
+      JSON.stringify({
+        model: MODEL,
+        value: 1,
+        unsubscribe: true,
+      })
+    );
+  });
+
+  test("should disconnect on provider unmount", async () => {
+    const Page = () => {
+      const { data } = useRealtimeResource(
+        "/items/1/",
+        {
+          model: MODEL,
+          value: 1,
+        },
+        { fetcher }
+      );
+      return <div>message: {data && data.message}</div>;
+    };
+
     const { container, unmount } = render(
       <WebsocketProvider url="/api/ws/subscribe/">
         <Page />
@@ -87,13 +137,8 @@ describe("useRealtimeResource", () => {
       })
     );
     unmount();
-    await expect(ws).toReceiveMessage(
-      JSON.stringify({
-        model: MODEL,
-        value: 1,
-        unsubscribe: true,
-      })
-    );
+
+    await ws.closed;
   });
 
   test("should update with message", async () => {
