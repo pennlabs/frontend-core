@@ -1,5 +1,11 @@
-import React, { useContext } from "react";
-import { act, cleanup, render, waitForDomChange } from "@testing-library/react";
+import React, { useContext, useState } from "react";
+import {
+  act,
+  cleanup,
+  render,
+  waitForDomChange,
+  fireEvent,
+} from "@testing-library/react";
 import WS from "jest-websocket-mock";
 import { cache } from "swr";
 // @ts-ignore
@@ -44,7 +50,7 @@ jest.mock("../src/findOrigin", () => ({
   SITE_ORIGIN: () => WS_HOST,
 }));
 
-describe("useRealtimeResource", () => {
+describe("useRealtimeResourceList", () => {
   test("should connect to websocket", async () => {
     const num = 1;
     const Page = () => {
@@ -74,7 +80,7 @@ describe("useRealtimeResource", () => {
     expect(container.firstChild.textContent).toBe("message: hello world");
   });
 
-  test("should unsubscribe on unmount", async () => {
+  test("should unsubscribe on hook unmount", async () => {
     const num = 1;
     const Page = () => {
       const { data } = useRealtimeResourceList(
@@ -85,7 +91,52 @@ describe("useRealtimeResource", () => {
       );
       return <div>message: {data && data.map((e) => e.message).join(" ")}</div>;
     };
-    const { unmount } = render(
+
+    const ProviderComponent = () => {
+      const [mount, setMount] = useState(true);
+      return (
+        <WebsocketProvider url="/api/ws/subscribe/">
+          <button onClick={() => setMount(false)}>Click</button>
+          {mount && <Page />}
+        </WebsocketProvider>
+      );
+    };
+
+    const { unmount, getByText } = render(<ProviderComponent />);
+    await ws.connected;
+    await expect(ws).toReceiveMessage(
+      JSON.stringify({
+        model: MODEL,
+        property: "list_id",
+        value: 1,
+      } as SubscribeRequest<Elem>)
+    );
+
+    fireEvent.click(getByText("Click"));
+
+    await expect(ws).toReceiveMessage(
+      JSON.stringify({
+        model: MODEL,
+        property: "list_id",
+        value: 1,
+        unsubscribe: true,
+      })
+    );
+  });
+
+  test("should unsubscribe on provider unmount", async () => {
+    const num = 1;
+    const Page = () => {
+      const { data } = useRealtimeResourceList(
+        `/items-${num}/`,
+        (id) => `/items-${num}/${id}/`,
+        { model: MODEL, property: "list_id", value: 1 },
+        { fetcher }
+      );
+      return <div>message: {data && data.map((e) => e.message).join(" ")}</div>;
+    };
+
+    const { unmount, getByText } = render(
       <WebsocketProvider url="/api/ws/subscribe/">
         <Page />
       </WebsocketProvider>
@@ -98,15 +149,9 @@ describe("useRealtimeResource", () => {
         value: 1,
       } as SubscribeRequest<Elem>)
     );
+
     unmount();
-    await expect(ws).toReceiveMessage(
-      JSON.stringify({
-        model: MODEL,
-        property: "list_id",
-        value: 1,
-        unsubscribe: true,
-      })
-    );
+    await ws.closed;
   });
 
   test("should update from websocket", async () => {
