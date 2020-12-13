@@ -1,4 +1,5 @@
-import { Identifiable } from "@pennlabs/rest-hooks";
+import { Identifiable, Identifier } from "@pennlabs/rest-hooks";
+import { MutableRefObject } from "react";
 
 export enum Action {
   CREATED = "CREATED",
@@ -11,17 +12,25 @@ export type SubscribeRequest<
   K extends keyof R = keyof R
 > = {
   model: string;
-  property?: K;
-  value: string | number;
+  group_by?: K;
+  value: Identifier;
 };
 
 export type ResourceUpdate<R extends Identifiable> = {
-  action: Action;
+  type: "broadcast";
+  request_id: number;
   model: string;
+  action: Action;
   instance: R;
-  group_key_value: string | number;
 };
 
 export type RevalidationUpdate = {
   action: "REVALIDATE";
+};
+export type UpdateListener = {
+  request_id: number;
+  request: SubscribeRequest<any>;
+  notify: MutableRefObject<
+    (update: ResourceUpdate<any> | RevalidationUpdate) => Promise<any[] | any>
+  >;
 };

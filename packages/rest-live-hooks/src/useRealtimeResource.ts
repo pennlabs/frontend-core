@@ -11,7 +11,8 @@ import {
   SubscribeRequest,
   RevalidationUpdate,
 } from "./types";
-import { takeTicket, WSContext } from "./Websocket";
+import { WSContext } from "./Websocket";
+import { takeTicket } from "./takeTicket";
 
 interface useRealtimeResourceResponse<R> extends useResourceResponse<R> {
   isConnected: boolean;
@@ -57,9 +58,10 @@ function useRealtimeResource<R extends Identifiable>(
     }
   };
   useEffect(() => {
-    const uuid = takeTicket();
-    websocket.subscribe(subscribeRequest, callbackRef, uuid).then();
-    return () => websocket.unsubscribe(uuid);
+    const request_id = takeTicket();
+    console.log(`DEBUG: Picked ticket with id=${request_id}`);
+    websocket.subscribe(subscribeRequest, callbackRef, request_id).then();
+    return () => websocket.unsubscribe(request_id);
   }, []);
 
   return { isConnected, ...response };

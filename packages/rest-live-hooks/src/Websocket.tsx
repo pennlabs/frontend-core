@@ -1,23 +1,20 @@
 import React, {
-  useRef,
-  MutableRefObject,
   createContext,
-  useState,
-  useEffect,
+  MutableRefObject,
   PropsWithChildren,
+  useEffect,
+  useRef,
+  useState,
 } from "react";
 import ReconnectingWebSocket, { Options } from "reconnecting-websocket";
-import { ResourceUpdate, RevalidationUpdate, SubscribeRequest } from "./types";
+import {
+  ResourceUpdate,
+  RevalidationUpdate,
+  SubscribeRequest,
+  UpdateListener,
+} from "./types";
 import { Identifiable } from "@pennlabs/rest-hooks";
 import { SITE_ORIGIN } from "./findOrigin";
-
-type UpdateListener = {
-  request: SubscribeRequest<any>;
-  notify: MutableRefObject<
-    (update: ResourceUpdate<any> | RevalidationUpdate) => Promise<any[] | any>
-  >;
-  uuid: number;
-};
 
 export type WSContextProps = {
   websocket: WebsocketManager;
@@ -65,6 +62,12 @@ class WebsocketManager {
   private isConnectedCallback: (isConnected: boolean) => any;
   private readonly wsOptions: Partial<Options>;
 
+  sendSubscriptionFor(listener: UpdateListener) {
+    this.websocket!.send(
+      JSON.stringify({ request_id: listener.request_id, ...listener.request })
+    );
+  }
+
   connect() {
     const url = this.findOrigin() + this.url;
     this.websocket = new ReconnectingWebSocket(url, undefined, {
@@ -75,14 +78,9 @@ class WebsocketManager {
       const message = JSON.parse(event.data);
       if (message.model) {
         const update = message as ResourceUpdate<any>;
-        const relevantListeners = this.listeners.filter(
-          (listener) =>
-            listener.request.model === update.model &&
-            update.group_key_value === listener.request.value
-        );
-        relevantListeners.forEach((listener) =>
-          listener.notify.current(update)
-        );
+        this.listeners
+          .find((listener) => listener.request_id === update.request_id)
+          ?.notify?.current(update);
       }
     });
     this.websocket.addEventListener("error", () => {
@@ -96,7 +94,7 @@ class WebsocketManager {
       // subscribe before the connection is open
       this.listeners.forEach((listener) => {
         // if websocket is open then it cannot be null
-        this.websocket!.send(JSON.stringify(listener.request));
+        this.sendSubscriptionFor(listener);
         listener.notify.current({ action: "REVALIDATE" });
       });
       this.isConnectedCallback(true);
@@ -126,40 +124,26 @@ class WebsocketManager {
     notify: MutableRefObject<
       (update: ResourceUpdate<T> | RevalidationUpdate) => Promise<T[] | T>
     >,
-    uuid: number
+    request_id: number
   ) {
+    const listener = { request, notify, request_id };
     if (
       this.websocket &&
       this.websocket.readyState === ReconnectingWebSocket.OPEN
     ) {
-      this.websocket.send(JSON.stringify(request));
+      this.sendSubscriptionFor(listener);
     }
 
-    this.listeners.push({
-      request: request,
-      notify,
-      uuid,
-    });
+    this.listeners.push(listener);
   }
 
-  unsubscribe(uuid: number) {
+  unsubscribe(request_id: number) {
     if (this.websocket === null) {
       throw new Error(
         "Unsubscribe cannot be called if no connection has been established"
       );
     }
-    const listener = this.listeners.find((l) => l.uuid == uuid);
-    if (!listener) {
-      throw new Error("invalid uuid");
-    }
-
-    const request = listener.request;
-    this.websocket.send(JSON.stringify({ ...request, unsubscribe: true }));
-    this.listeners = this.listeners.filter((l) => l.uuid !== uuid);
+    this.websocket.send(JSON.stringify({ request_id, unsubscribe: true }));
+    this.listeners = this.listeners.filter((l) => l.request_id !== request_id);
   }
 }
-
-export const takeTicket = (() => {
-  let count = 0;
-  return () => count++;
-})();

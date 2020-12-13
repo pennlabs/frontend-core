@@ -12,7 +12,8 @@ import {
   SubscribeRequest,
   RevalidationUpdate,
 } from "./types";
-import { takeTicket, WSContext } from "./Websocket";
+import { WSContext } from "./Websocket";
+import { takeTicket } from "./takeTicket";
 
 interface useRealtimeResourceListResponse<R extends Identifiable>
   extends useResourceListResponse<R> {
@@ -73,9 +74,9 @@ function useRealtimeResourceList<R extends Identifiable, K extends keyof R>(
   };
 
   useEffect(() => {
-    const uuid = takeTicket();
-    websocket.subscribe(subscribeRequest, callbackRef, uuid).then();
-    return () => websocket.unsubscribe(uuid);
+    const request_id = takeTicket();
+    websocket.subscribe(subscribeRequest, callbackRef, request_id).then();
+    return () => websocket.unsubscribe(request_id);
   }, []);
 
   return { isConnected, ...response };

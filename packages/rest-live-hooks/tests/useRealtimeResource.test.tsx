@@ -17,6 +17,7 @@ import { WebsocketProvider, WSContext } from "../src/Websocket";
 
 let ws: WS;
 
+const REQUEST_ID = 1337;
 const WS_HOST = "ws://localhost:3000";
 const MODEL = "todolist.Task";
 interface Elem {
@@ -41,6 +42,10 @@ jest.mock("../src/findOrigin", () => ({
   SITE_ORIGIN: () => WS_HOST,
 }));
 
+jest.mock("../src/takeTicket", () => ({
+  takeTicket: () => REQUEST_ID,
+}));
+
 describe("useRealtimeResource", () => {
   test("should connect to websocket", async () => {
     const Page = () => {
@@ -61,6 +66,7 @@ describe("useRealtimeResource", () => {
     await ws.connected;
     await expect(ws).toReceiveMessage(
       JSON.stringify({
+        request_id: REQUEST_ID,
         model: MODEL,
         value: 1,
       })
@@ -95,6 +101,7 @@ describe("useRealtimeResource", () => {
     await ws.connected;
     await expect(ws).toReceiveMessage(
       JSON.stringify({
+        request_id: REQUEST_ID,
         model: MODEL,
         value: 1,
       })
@@ -104,8 +111,7 @@ describe("useRealtimeResource", () => {
 
     await expect(ws).toReceiveMessage(
       JSON.stringify({
-        model: MODEL,
-        value: 1,
+        request_id: REQUEST_ID,
         unsubscribe: true,
       })
     );
@@ -132,6 +138,7 @@ describe("useRealtimeResource", () => {
     await ws.connected;
     await expect(ws).toReceiveMessage(
       JSON.stringify({
+        request_id: REQUEST_ID,
         model: MODEL,
         value: 1,
       })
@@ -157,13 +164,14 @@ describe("useRealtimeResource", () => {
     );
     await ws.connected; // test will time out if connection fails.
     const update: ResourceUpdate<Elem> = {
+      type: "broadcast",
+      request_id: REQUEST_ID,
       model: MODEL,
       action: Action.UPDATED,
       instance: {
         id: 1,
         message: "hello",
       },
-      group_key_value: 1,
     };
     act(() => {
       ws.send(JSON.stringify(update));
@@ -207,6 +215,7 @@ describe("useRealtimeResource", () => {
     await ws.connected;
     await expect(ws).toReceiveMessage(
       JSON.stringify({
+        request_id: REQUEST_ID,
         model: MODEL,
         value: 1,
       })
@@ -221,6 +230,7 @@ describe("useRealtimeResource", () => {
 
     await expect(ws).toReceiveMessage(
       JSON.stringify({
+        request_id: REQUEST_ID,
         model: MODEL,
         value: 1,
       })
