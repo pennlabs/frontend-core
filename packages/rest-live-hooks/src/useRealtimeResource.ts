@@ -59,7 +59,6 @@ function useRealtimeResource<R extends Identifiable>(
   };
   useEffect(() => {
     const request_id = takeTicket();
-    console.log(`DEBUG: Picked ticket with id=${request_id}`);
     websocket.subscribe(subscribeRequest, callbackRef, request_id).then();
     return () => websocket.unsubscribe(request_id);
   }, []);
