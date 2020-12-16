@@ -66,6 +66,7 @@ describe("useRealtimeResource", () => {
     await ws.connected;
     await expect(ws).toReceiveMessage(
       JSON.stringify({
+        type: "subscribe",
         request_id: REQUEST_ID,
         model: MODEL,
         value: 1,
@@ -101,6 +102,7 @@ describe("useRealtimeResource", () => {
     await ws.connected;
     await expect(ws).toReceiveMessage(
       JSON.stringify({
+        type: "subscribe",
         request_id: REQUEST_ID,
         model: MODEL,
         value: 1,
@@ -111,8 +113,8 @@ describe("useRealtimeResource", () => {
 
     await expect(ws).toReceiveMessage(
       JSON.stringify({
+        type: "unsubscribe",
         request_id: REQUEST_ID,
-        unsubscribe: true,
       })
     );
   });
@@ -138,6 +140,7 @@ describe("useRealtimeResource", () => {
     await ws.connected;
     await expect(ws).toReceiveMessage(
       JSON.stringify({
+        type: "subscribe",
         request_id: REQUEST_ID,
         model: MODEL,
         value: 1,
@@ -215,6 +218,7 @@ describe("useRealtimeResource", () => {
     await ws.connected;
     await expect(ws).toReceiveMessage(
       JSON.stringify({
+        type: "subscribe",
         request_id: REQUEST_ID,
         model: MODEL,
         value: 1,
@@ -230,6 +234,7 @@ describe("useRealtimeResource", () => {
 
     await expect(ws).toReceiveMessage(
       JSON.stringify({
+        type: "subscribe",
         request_id: REQUEST_ID,
         model: MODEL,
         value: 1,

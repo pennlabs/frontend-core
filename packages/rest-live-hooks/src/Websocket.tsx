@@ -64,7 +64,11 @@ class WebsocketManager {
 
   sendSubscriptionFor(listener: UpdateListener) {
     this.websocket!.send(
-      JSON.stringify({ request_id: listener.request_id, ...listener.request })
+      JSON.stringify({
+        type: "subscribe",
+        request_id: listener.request_id,
+        ...listener.request,
+      })
     );
   }
 
@@ -143,7 +147,7 @@ class WebsocketManager {
         "Unsubscribe cannot be called if no connection has been established"
       );
     }
-    this.websocket.send(JSON.stringify({ request_id, unsubscribe: true }));
+    this.websocket.send(JSON.stringify({ type: "unsubscribe", request_id }));
     this.listeners = this.listeners.filter((l) => l.request_id !== request_id);
   }
 }
