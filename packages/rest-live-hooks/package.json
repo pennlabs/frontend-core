@@ -18,8 +18,8 @@
     "swr": "^0.3.1"
   },
   "dependencies": {
-    "reconnecting-websocket": "^4.4.0",
-    "@pennlabs/rest-hooks": "^0.1.7"
+    "@pennlabs/rest-hooks": "^0.1.7",
+    "reconnecting-websocket": "^4.4.0"
   },
   "devDependencies": {
     "@babel/preset-typescript": "^7.10.4",
