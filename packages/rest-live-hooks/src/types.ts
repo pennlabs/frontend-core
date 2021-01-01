@@ -4,21 +4,29 @@ import { MutableRefObject } from "react";
 export enum Action {
   CREATED = "CREATED",
   UPDATED = "UPDATED",
-  DELETED = "DELETED",
+  DELETED = "DELETED"
 }
 
-export type SubscribeRequest<
+export interface SubscribeRequest {
+  model: string;
+  action?: "retrieve" | "list";
+}
+
+export interface RealtimeRetrieveRequestProps<
   R extends Identifiable,
   K extends keyof R = keyof R
-> = {
-  model: string;
-  group_by?: K;
-  value: Identifier;
-};
+> extends SubscribeRequest {
+  action?: "retrieve";
+  lookup_by: Identifier;
+}
 
-export type ResourceUpdate<R extends Identifiable> = {
+export interface RealtimeListRequestProps extends SubscribeRequest {
+  action?: "list";
+}
+
+export type ResourceBroadcast<R extends Identifiable> = {
   type: "broadcast";
-  request_id: number;
+  id: number;
   model: string;
   action: Action;
   instance: R;
@@ -29,8 +37,10 @@ export type RevalidationUpdate = {
 };
 export type UpdateListener = {
   request_id: number;
-  request: SubscribeRequest<any>;
+  request: SubscribeRequest;
   notify: MutableRefObject<
-    (update: ResourceUpdate<any> | RevalidationUpdate) => Promise<any[] | any>
+    (
+      update: ResourceBroadcast<any> | RevalidationUpdate
+    ) => Promise<any[] | any>
   >;
 };

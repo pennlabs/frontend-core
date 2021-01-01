@@ -6,5 +6,5 @@ export {
   useRealtimeResource,
   useRealtimeResourceList,
   WebsocketProvider,
-  WSContext,
+  WSContext
 };

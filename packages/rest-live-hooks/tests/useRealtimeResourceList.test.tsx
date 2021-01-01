@@ -11,7 +11,7 @@ import { cache } from "swr";
 // @ts-ignore
 import useRealtimeResourceList from "../src/useRealtimeResourceList";
 // @ts-ignore
-import { Action, ResourceUpdate, SubscribeRequest } from "../src/types";
+import { Action, ResourceBroadcast, SubscribeRequest } from "../src/types";
 // @ts-ignore
 import { WebsocketProvider, WSContext } from "../src/Websocket";
 
@@ -62,7 +62,7 @@ describe("useRealtimeResourceList", () => {
       const { data } = useRealtimeResourceList(
         `/items-${num}/`,
         (id) => `/items-${num}/${id}/`,
-        { model: MODEL, group_by: "list_id", value: 1 },
+        { model: MODEL },
         { fetcher }
       );
       return <div>message: {data && data.map((e) => e.message).join(" ")}</div>;
@@ -78,11 +78,10 @@ describe("useRealtimeResourceList", () => {
     await expect(ws).toReceiveMessage(
       JSON.stringify({
         type: "subscribe",
-        request_id: REQUEST_ID,
+        id: REQUEST_ID,
+        action: "list",
         model: MODEL,
-        group_by: "list_id",
-        value: 1,
-      } as SubscribeRequest<Elem>)
+      } as SubscribeRequest)
     );
     expect(container.firstChild.textContent).toBe("message: hello world");
   });
@@ -93,7 +92,7 @@ describe("useRealtimeResourceList", () => {
       const { data } = useRealtimeResourceList(
         `/items-${num}/`,
         (id) => `/items-${num}/${id}/`,
-        { model: MODEL, group_by: "list_id", value: 1 },
+        { model: MODEL },
         { fetcher }
       );
       return <div>message: {data && data.map((e) => e.message).join(" ")}</div>;
@@ -114,11 +113,10 @@ describe("useRealtimeResourceList", () => {
     await expect(ws).toReceiveMessage(
       JSON.stringify({
         type: "subscribe",
-        request_id: REQUEST_ID,
+        id: REQUEST_ID,
+        action: "list",
         model: MODEL,
-        group_by: "list_id",
-        value: 1,
-      } as SubscribeRequest<Elem>)
+      } as SubscribeRequest)
     );
 
     fireEvent.click(getByText("Click"));
@@ -126,7 +124,7 @@ describe("useRealtimeResourceList", () => {
     await expect(ws).toReceiveMessage(
       JSON.stringify({
         type: "unsubscribe",
-        request_id: REQUEST_ID,
+        id: REQUEST_ID,
       })
     );
   });
@@ -137,7 +135,7 @@ describe("useRealtimeResourceList", () => {
       const { data } = useRealtimeResourceList(
         `/items-${num}/`,
         (id) => `/items-${num}/${id}/`,
-        { model: MODEL, group_by: "list_id", value: 1 },
+        { model: MODEL },
         { fetcher }
       );
       return <div>message: {data && data.map((e) => e.message).join(" ")}</div>;
@@ -152,11 +150,10 @@ describe("useRealtimeResourceList", () => {
     await expect(ws).toReceiveMessage(
       JSON.stringify({
         type: "subscribe",
-        request_id: REQUEST_ID,
+        id: REQUEST_ID,
+        action: "list",
         model: MODEL,
-        group_by: "list_id",
-        value: 1,
-      } as SubscribeRequest<Elem>)
+      } as SubscribeRequest)
     );
 
     unmount();
@@ -169,7 +166,7 @@ describe("useRealtimeResourceList", () => {
       const { data } = useRealtimeResourceList(
         `/items-${num}/`,
         (id) => `/items-${num}/${id}/`,
-        { model: MODEL, group_by: "list_id", value: 1 },
+        { model: MODEL },
         { fetcher }
       );
       return <div>message: {data && data.map((e) => e.message).join(" ")}</div>;
@@ -180,8 +177,8 @@ describe("useRealtimeResourceList", () => {
       </WebsocketProvider>
     );
     await ws.connected; // test will time out if connection fails.
-    const update: ResourceUpdate<Elem> = {
-      request_id: REQUEST_ID,
+    const update: ResourceBroadcast<Elem> = {
+      id: REQUEST_ID,
       type: "broadcast",
       model: MODEL,
       action: Action.UPDATED,
@@ -203,7 +200,7 @@ describe("useRealtimeResourceList", () => {
       const { data } = useRealtimeResourceList(
         `/items-${num}/`,
         (id) => `/items-${num}/${id}/`,
-        { model: MODEL, group_by: "list_id", value: 1 },
+        { model: MODEL },
         { fetcher }
       );
       return <div>message: {data && data.map((e) => e.message).join(" ")}</div>;
@@ -214,8 +211,8 @@ describe("useRealtimeResourceList", () => {
       </WebsocketProvider>
     );
     await ws.connected; // test will time out if connection fails.
-    const update: ResourceUpdate<Elem> = {
-      request_id: REQUEST_ID,
+    const update: ResourceBroadcast<Elem> = {
+      id: REQUEST_ID,
       type: "broadcast",
       model: MODEL,
       action: Action.DELETED,
@@ -237,7 +234,7 @@ describe("useRealtimeResourceList", () => {
       const { data } = useRealtimeResourceList(
         `/items-${num}/`,
         (id) => `/items-${num}/${id}/`,
-        { model: MODEL, group_by: "list_id", value: 1 },
+        { model: MODEL },
         { fetcher, orderBy: (a, b) => a.id - b.id }
       );
       return <div>message: {data && data.map((e) => e.message).join(" ")}</div>;
@@ -248,8 +245,8 @@ describe("useRealtimeResourceList", () => {
       </WebsocketProvider>
     );
     await ws.connected; // test will time out if connection fails.
-    const update: ResourceUpdate<Elem> = {
-      request_id: REQUEST_ID,
+    const update: ResourceBroadcast<Elem> = {
+      id: REQUEST_ID,
       type: "broadcast",
       model: MODEL,
       action: Action.CREATED,
@@ -265,13 +262,13 @@ describe("useRealtimeResourceList", () => {
     expect(container.firstChild.textContent).toBe("message: hello world third");
   });
 
-  test("should check to make sure the request_id is correct", async () => {
+  test("should check to make sure the id is correct", async () => {
     const num = 5;
     const Page = () => {
       const { data } = useRealtimeResourceList(
         `/items-${num}/`,
         (id) => `/items-${num}/${id}/`,
-        { model: MODEL, group_by: "list_id", value: 1 },
+        { model: MODEL },
         { fetcher, orderBy: (a, b) => a.id - b.id }
       );
       return <div>message: {data && data.map((e) => e.message).join(" ")}</div>;
@@ -282,8 +279,8 @@ describe("useRealtimeResourceList", () => {
       </WebsocketProvider>
     );
     await ws.connected; // test will time out if connection fails.
-    const update: ResourceUpdate<Elem> = {
-      request_id: REQUEST_ID + 21,
+    const update: ResourceBroadcast<Elem> = {
+      id: REQUEST_ID + 21,
       type: "broadcast",
       model: MODEL,
       action: Action.CREATED,
@@ -321,7 +318,7 @@ describe("useRealtimeResourceList", () => {
       const { data } = useRealtimeResourceList(
         `/items-${num}/`,
         (id) => `/items-${num}/${id}/`,
-        { model: MODEL, group_by: "list_id", value: 1 },
+        { model: MODEL },
         { fetcher: stateFetcher }
       );
       return (
@@ -347,11 +344,10 @@ describe("useRealtimeResourceList", () => {
     await expect(ws).toReceiveMessage(
       JSON.stringify({
         type: "subscribe",
-        request_id: REQUEST_ID,
+        id: REQUEST_ID,
+        action: "list",
         model: MODEL,
-        group_by: "list_id",
-        value: 1,
-      } as SubscribeRequest<Elem>)
+      } as SubscribeRequest)
     );
     expect(container.firstChild.firstChild.textContent).toBe(
       "message: hello world"
@@ -368,11 +364,10 @@ describe("useRealtimeResourceList", () => {
     await expect(ws).toReceiveMessage(
       JSON.stringify({
         type: "subscribe",
-        request_id: REQUEST_ID,
+        id: REQUEST_ID,
+        action: "list",
         model: MODEL,
-        group_by: "list_id",
-        value: 1,
-      } as SubscribeRequest<Elem>)
+      } as SubscribeRequest)
     );
     expect(container.firstChild.firstChild.textContent).toBe(
       "message: bye earth"

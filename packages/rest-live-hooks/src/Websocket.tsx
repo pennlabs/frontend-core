@@ -4,14 +4,14 @@ import React, {
   PropsWithChildren,
   useEffect,
   useRef,
-  useState,
+  useState
 } from "react";
 import ReconnectingWebSocket, { Options } from "reconnecting-websocket";
 import {
-  ResourceUpdate,
+  ResourceBroadcast,
   RevalidationUpdate,
   SubscribeRequest,
-  UpdateListener,
+  UpdateListener
 } from "./types";
 import { Identifiable } from "@pennlabs/rest-hooks";
 import { SITE_ORIGIN } from "./findOrigin";
@@ -27,7 +27,7 @@ export function WebsocketProvider({
   url,
   options,
   findOrigin,
-  children,
+  children
 }: PropsWithChildren<{
   url: string;
   findOrigin?: () => string;
@@ -66,8 +66,8 @@ class WebsocketManager {
     this.websocket!.send(
       JSON.stringify({
         type: "subscribe",
-        request_id: listener.request_id,
-        ...listener.request,
+        id: listener.request_id,
+        ...listener.request
       })
     );
   }
@@ -75,15 +75,15 @@ class WebsocketManager {
   connect() {
     const url = this.findOrigin() + this.url;
     this.websocket = new ReconnectingWebSocket(url, undefined, {
-      ...this.wsOptions,
+      ...this.wsOptions
     });
 
     this.websocket.addEventListener("message", (event: MessageEvent) => {
       const message = JSON.parse(event.data);
       if (message.model) {
-        const update = message as ResourceUpdate<any>;
+        const update = message as ResourceBroadcast<any>;
         this.listeners
-          .find((listener) => listener.request_id === update.request_id)
+          .find(listener => listener.request_id === update.id)
           ?.notify?.current(update);
       }
     });
@@ -96,7 +96,7 @@ class WebsocketManager {
     this.websocket.addEventListener("open", () => {
       // NOTE: This operates under the assumption that no consumer will
       // subscribe before the connection is open
-      this.listeners.forEach((listener) => {
+      this.listeners.forEach(listener => {
         // if websocket is open then it cannot be null
         this.sendSubscriptionFor(listener);
         listener.notify.current({ action: "REVALIDATE" });
@@ -124,9 +124,9 @@ class WebsocketManager {
   }
 
   async subscribe<T extends Identifiable>(
-    request: SubscribeRequest<T>,
+    request: Required<SubscribeRequest>,
     notify: MutableRefObject<
-      (update: ResourceUpdate<T> | RevalidationUpdate) => Promise<T[] | T>
+      (update: ResourceBroadcast<T> | RevalidationUpdate) => Promise<T[] | T>
     >,
     request_id: number
   ) {
@@ -147,7 +147,9 @@ class WebsocketManager {
         "Unsubscribe cannot be called if no connection has been established"
       );
     }
-    this.websocket.send(JSON.stringify({ type: "unsubscribe", request_id }));
-    this.listeners = this.listeners.filter((l) => l.request_id !== request_id);
+    this.websocket.send(
+      JSON.stringify({ type: "unsubscribe", id: request_id })
+    );
+    this.listeners = this.listeners.filter(l => l.request_id !== request_id);
   }
 }

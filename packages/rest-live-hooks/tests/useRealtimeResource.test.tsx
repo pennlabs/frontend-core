@@ -11,7 +11,7 @@ import { cache } from "swr";
 // @ts-ignore
 import useRealtimeResource from "../src/useRealtimeResource";
 // @ts-ignore
-import { Action, ResourceUpdate } from "../src/types";
+import { Action, ResourceBroadcast } from "../src/types";
 // @ts-ignore
 import { WebsocketProvider, WSContext } from "../src/Websocket";
 
@@ -51,7 +51,7 @@ describe("useRealtimeResource", () => {
     const Page = () => {
       const { data } = useRealtimeResource(
         "/items/1/",
-        { model: MODEL, value: 1 },
+        { model: MODEL, lookup_by: 1 },
         { fetcher }
       );
       return <div>message: {data && data.message}</div>;
@@ -67,9 +67,10 @@ describe("useRealtimeResource", () => {
     await expect(ws).toReceiveMessage(
       JSON.stringify({
         type: "subscribe",
-        request_id: REQUEST_ID,
+        id: REQUEST_ID,
+        action: "retrieve",
         model: MODEL,
-        value: 1,
+        lookup_by: 1,
       })
     );
     expect(container.firstChild.textContent).toBe("message: hi");
@@ -81,7 +82,7 @@ describe("useRealtimeResource", () => {
         "/items/1/",
         {
           model: MODEL,
-          value: 1,
+          lookup_by: 1,
         },
         { fetcher }
       );
@@ -103,9 +104,10 @@ describe("useRealtimeResource", () => {
     await expect(ws).toReceiveMessage(
       JSON.stringify({
         type: "subscribe",
-        request_id: REQUEST_ID,
+        id: REQUEST_ID,
+        action: "retrieve",
         model: MODEL,
-        value: 1,
+        lookup_by: 1,
       })
     );
 
@@ -114,7 +116,7 @@ describe("useRealtimeResource", () => {
     await expect(ws).toReceiveMessage(
       JSON.stringify({
         type: "unsubscribe",
-        request_id: REQUEST_ID,
+        id: REQUEST_ID,
       })
     );
   });
@@ -125,7 +127,7 @@ describe("useRealtimeResource", () => {
         "/items/1/",
         {
           model: MODEL,
-          value: 1,
+          lookup_by: 1,
         },
         { fetcher }
       );
@@ -141,9 +143,10 @@ describe("useRealtimeResource", () => {
     await expect(ws).toReceiveMessage(
       JSON.stringify({
         type: "subscribe",
-        request_id: REQUEST_ID,
+        id: REQUEST_ID,
+        action: "retrieve",
         model: MODEL,
-        value: 1,
+        lookup_by: 1,
       })
     );
     unmount();
@@ -155,7 +158,7 @@ describe("useRealtimeResource", () => {
     const Page = () => {
       const { data } = useRealtimeResource(
         "/items/2/",
-        { model: MODEL, value: 1 },
+        { model: MODEL, lookup_by: 1 },
         { fetcher }
       );
       return <div>message: {data && data.message}</div>;
@@ -166,9 +169,9 @@ describe("useRealtimeResource", () => {
       </WebsocketProvider>
     );
     await ws.connected; // test will time out if connection fails.
-    const update: ResourceUpdate<Elem> = {
+    const update: ResourceBroadcast<Elem> = {
       type: "broadcast",
-      request_id: REQUEST_ID,
+      id: REQUEST_ID,
       model: MODEL,
       action: Action.UPDATED,
       instance: {
@@ -193,7 +196,7 @@ describe("useRealtimeResource", () => {
       const { isConnected } = useContext(WSContext);
       const { data } = useRealtimeResource(
         "/items/1/",
-        { model: MODEL, value: 1 },
+        { model: MODEL, lookup_by: 1 },
         { fetcher: stateFetcher }
       );
       return (
@@ -219,9 +222,10 @@ describe("useRealtimeResource", () => {
     await expect(ws).toReceiveMessage(
       JSON.stringify({
         type: "subscribe",
-        request_id: REQUEST_ID,
+        id: REQUEST_ID,
+        action: "retrieve",
         model: MODEL,
-        value: 1,
+        lookup_by: 1,
       })
     );
     expect(container.firstChild.firstChild.textContent).toBe("message: hi0");
@@ -235,9 +239,10 @@ describe("useRealtimeResource", () => {
     await expect(ws).toReceiveMessage(
       JSON.stringify({
         type: "subscribe",
-        request_id: REQUEST_ID,
+        id: REQUEST_ID,
+        action: "retrieve",
         model: MODEL,
-        value: 1,
+        lookup_by: 1,
       })
     );
     expect(container.firstChild.firstChild.textContent).toBe("message: hi1");
