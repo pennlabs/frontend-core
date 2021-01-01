@@ -1,6 +1,6 @@
 {
   "name": "@pennlabs/rest-hooks",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "React hooks for fetching resources at RESTful endpoints built on top of SWR.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -16,8 +16,6 @@
   "peerDependencies": {
     "react": ">=16.8.0",
     "swr": ">=0.3.1"
-  },
-  "dependencies": {
   },
   "devDependencies": {
     "@testing-library/react": "^11.0.2",
