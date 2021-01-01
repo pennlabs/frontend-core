@@ -14,12 +14,12 @@
     "test": "jest"
   },
   "peerDependencies": {
-    "react": ">=16.8.0"
+    "react": ">=16.8.0",
+    "swr": "^0.3.1"
   },
   "dependencies": {
     "@pennlabs/rest-hooks": "^0.1.6",
-    "reconnecting-websocket": "^4.4.0",
-    "swr": "^0.3.1"
+    "reconnecting-websocket": "^4.4.0"
   },
   "devDependencies": {
     "@babel/preset-typescript": "^7.10.4",

@@ -14,10 +14,10 @@
     "test": "jest"
   },
   "peerDependencies": {
-    "react": ">=16.8.0"
+    "react": ">=16.8.0",
+    "swr": ">=0.3.1"
   },
   "dependencies": {
-    "swr": ">=0.3.1"
   },
   "devDependencies": {
     "@testing-library/react": "^11.0.2",
