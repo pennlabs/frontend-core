@@ -69,6 +69,7 @@ describe("useResourceList", () => {
     await waitForDomChange({ container });
     expect(container.firstChild.textContent).toBe("message: hello world");
     fireEvent.click(container.firstElementChild);
+    await waitForDomChange({ container });
     expect(container.firstChild.textContent).toBe("message: HELLO world");
   });
 
@@ -96,6 +97,7 @@ describe("useResourceList", () => {
     await waitForDomChange({ container });
     expect(container.firstChild.textContent).toBe("message: hello world");
     fireEvent.click(container.firstElementChild);
+    await waitForDomChange({ container });
     expect(container.firstChild.textContent).toBe("message: hello");
     expect(fetching.doApiRequest).toBeCalledWith(
       `/items/${num}/2/`,
@@ -133,6 +135,7 @@ describe("useResourceList", () => {
     await waitForDomChange({ container });
     expect(container.firstChild.textContent).toBe("message: hello world");
     fireEvent.click(container.firstElementChild);
+    await waitForDomChange({ container });
     expect(container.firstChild.textContent).toBe("message: Why, hello world");
     expect(fetching.doApiRequest).toHaveBeenCalledTimes(0);
   });
@@ -170,6 +173,7 @@ describe("useResourceList", () => {
     await waitForDomChange({ container });
     expect(container.firstChild.textContent).toBe("message: hello world");
     fireEvent.click(container.firstElementChild);
+    await waitForDomChange({ container });
     expect(container.firstChild.textContent).toBe("message: hello world third");
     expect(fetching.doApiRequest).toHaveBeenCalledTimes(0);
   });
@@ -194,6 +198,7 @@ describe("useResourceList", () => {
     await waitForDomChange({ container });
     expect(container.firstChild.textContent).toBe("message: hello world");
     fireEvent.click(container.firstElementChild);
+    await 0;
     expect(container.firstChild.textContent).toBe("message: hello world");
     expect(fetching.doApiRequest).toHaveBeenCalledTimes(0);
   });
@@ -226,6 +231,7 @@ describe("useResourceList", () => {
     await waitForDomChange({ container });
     expect(container.firstChild.textContent).toBe("message: hello world");
     fireEvent.click(container.firstElementChild);
+    await waitForDomChange({ container });
     expect(container.firstChild.textContent).toBe("message: Yo world");
     expect(fetching.doApiRequest).toHaveBeenCalledTimes(0);
   });

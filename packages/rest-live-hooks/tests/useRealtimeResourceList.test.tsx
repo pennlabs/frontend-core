@@ -197,6 +197,7 @@ describe("useRealtimeResourceList", () => {
     act(() => {
       ws.send(JSON.stringify(update));
     });
+    await waitForDomChange({ container });
     expect(container.firstChild.textContent).toBe("message: sup world");
   });
 
@@ -231,6 +232,7 @@ describe("useRealtimeResourceList", () => {
     act(() => {
       ws.send(JSON.stringify(update));
     });
+    await waitForDomChange({ container });
     expect(container.firstChild.textContent).toBe("message: hello");
   });
 
@@ -265,6 +267,7 @@ describe("useRealtimeResourceList", () => {
     act(() => {
       ws.send(JSON.stringify(update));
     });
+    await waitForDomChange({ container });
     expect(container.firstChild.textContent).toBe("message: hello world third");
   });
 

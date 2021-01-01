@@ -47,6 +47,7 @@ describe("useResource", () => {
     await waitForDomChange({ container });
     // call bound mutate
     fireEvent.click(container.firstElementChild);
+    await waitForDomChange({ container });
     expect(container.firstChild.textContent).toBe("message: bye");
     expect(fetching.doApiRequest).toBeCalledWith(
       "/items/2/",
@@ -76,6 +77,7 @@ describe("useResource", () => {
     const { container } = render(<Page />);
     await waitForDomChange({ container });
     fireEvent.click(container.firstElementChild);
+    await waitForDomChange({ container });
     expect(container.firstChild.textContent).toBe("message: bye");
     expect(fetching.doApiRequest).toBeCalledTimes(0);
   });
