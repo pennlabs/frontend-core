@@ -2,17 +2,18 @@ import {
   Identifiable,
   Identifier,
   useResourceList,
-  useResourceListResponse,
+  useResourceListResponse
 } from "@pennlabs/rest-hooks";
 import { ConfigInterface } from "swr";
 import { useEffect, useRef, useContext } from "react";
 import {
   Action,
-  ResourceUpdate,
-  SubscribeRequest,
-  RevalidationUpdate,
+  ResourceBroadcast,
+  RealtimeListRequestProps,
+  RevalidationUpdate
 } from "./types";
-import { takeTicket, WSContext } from "./Websocket";
+import { WSContext } from "./Websocket";
+import { takeTicket } from "./takeTicket";
 
 interface useRealtimeResourceListResponse<R extends Identifiable>
   extends useResourceListResponse<R> {
@@ -22,7 +23,7 @@ interface useRealtimeResourceListResponse<R extends Identifiable>
 function useRealtimeResourceList<R extends Identifiable, K extends keyof R>(
   listUrl: string | (() => string),
   getResourceUrl: (id: Identifier) => string,
-  subscribeRequest: SubscribeRequest<R, K>,
+  subscribeRequest: RealtimeListRequestProps,
   config?: ConfigInterface<R[]> & { orderBy?: (a: R, b: R) => number }
 ): useRealtimeResourceListResponse<R> {
   const contextProps = useContext(WSContext);
@@ -43,11 +44,11 @@ function useRealtimeResourceList<R extends Identifiable, K extends keyof R>(
   const response = useResourceList(listUrl, getResourceUrl, config);
   const { mutate } = response;
   const callbackRef = useRef<
-    (update: ResourceUpdate<R> | RevalidationUpdate) => Promise<R[]>
+    (update: ResourceBroadcast<R> | RevalidationUpdate) => Promise<R[]>
   >();
 
   callbackRef.current = async (
-    update: ResourceUpdate<R> | RevalidationUpdate
+    update: ResourceBroadcast<R> | RevalidationUpdate
   ) => {
     switch (update.action) {
       case Action.CREATED:
@@ -55,17 +56,17 @@ function useRealtimeResourceList<R extends Identifiable, K extends keyof R>(
           sendRequest: false,
           revalidate: false,
           append: true,
-          sortBy: orderBy,
+          sortBy: orderBy
         });
       case Action.UPDATED:
         return mutate(update.instance.id, update.instance, {
           sendRequest: false,
-          revalidate: false,
+          revalidate: false
         });
       case Action.DELETED:
         return mutate(update.instance.id, null, {
           sendRequest: false,
-          revalidate: false,
+          revalidate: false
         });
       case "REVALIDATE":
         return mutate(undefined, undefined, { sendRequest: false });
@@ -73,9 +74,20 @@ function useRealtimeResourceList<R extends Identifiable, K extends keyof R>(
   };
 
   useEffect(() => {
-    const uuid = takeTicket();
-    websocket.subscribe(subscribeRequest, callbackRef, uuid).then();
-    return () => websocket.unsubscribe(uuid);
+    const request_id = takeTicket();
+    websocket
+      .subscribe(
+        {
+          action: "list",
+          view_kwargs: {},
+          query_params: {},
+          ...subscribeRequest
+        },
+        callbackRef,
+        request_id
+      )
+      .then();
+    return () => websocket.unsubscribe(request_id);
   }, []);
 
   return { isConnected, ...response };

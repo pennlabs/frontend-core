@@ -1,27 +1,48 @@
-import { Identifiable } from "@pennlabs/rest-hooks";
+import { Identifiable, Identifier } from "@pennlabs/rest-hooks";
+import { MutableRefObject } from "react";
 
 export enum Action {
   CREATED = "CREATED",
   UPDATED = "UPDATED",
-  DELETED = "DELETED",
+  DELETED = "DELETED"
 }
 
-export type SubscribeRequest<
+export interface SubscribeRequest {
+  model: string;
+  action?: "retrieve" | "list";
+  view_kwargs?: { [key: string]: any };
+  query_params?: { [key: string]: any };
+}
+
+export interface RealtimeRetrieveRequestProps<
   R extends Identifiable,
   K extends keyof R = keyof R
-> = {
-  model: string;
-  property?: K;
-  value: string | number;
-};
+> extends SubscribeRequest {
+  action?: "retrieve";
+  lookup_by: Identifier;
+}
 
-export type ResourceUpdate<R extends Identifiable> = {
-  action: Action;
+export interface RealtimeListRequestProps extends SubscribeRequest {
+  action?: "list";
+}
+
+export type ResourceBroadcast<R extends Identifiable> = {
+  type: "broadcast";
+  id: number;
   model: string;
+  action: Action;
   instance: R;
-  group_key_value: string | number;
 };
 
 export type RevalidationUpdate = {
   action: "REVALIDATE";
+};
+export type UpdateListener = {
+  request_id: number;
+  request: SubscribeRequest;
+  notify: MutableRefObject<
+    (
+      update: ResourceBroadcast<any> | RevalidationUpdate
+    ) => Promise<any[] | any>
+  >;
 };

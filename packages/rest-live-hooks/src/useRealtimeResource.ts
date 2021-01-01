@@ -1,17 +1,19 @@
 import {
   Identifiable,
+  Identifier,
   useResource,
-  useResourceResponse,
+  useResourceResponse
 } from "@pennlabs/rest-hooks";
 import { ConfigInterface } from "swr";
 import { useEffect, useRef, useContext } from "react";
 import {
   Action,
-  ResourceUpdate,
-  SubscribeRequest,
+  ResourceBroadcast,
   RevalidationUpdate,
+  RealtimeRetrieveRequestProps
 } from "./types";
-import { takeTicket, WSContext } from "./Websocket";
+import { WSContext } from "./Websocket";
+import { takeTicket } from "./takeTicket";
 
 interface useRealtimeResourceResponse<R> extends useResourceResponse<R> {
   isConnected: boolean;
@@ -19,7 +21,7 @@ interface useRealtimeResourceResponse<R> extends useResourceResponse<R> {
 
 function useRealtimeResource<R extends Identifiable>(
   url: string,
-  subscribeRequest: SubscribeRequest<R>,
+  subscribeRequest: RealtimeRetrieveRequestProps<R>,
   config?: ConfigInterface<R>
 ): useRealtimeResourceResponse<R> {
   const contextProps = useContext(WSContext);
@@ -35,11 +37,11 @@ function useRealtimeResource<R extends Identifiable>(
   const response = useResource(url, config);
   const { mutate } = response;
   const callbackRef = useRef<
-    (update: ResourceUpdate<R> | RevalidationUpdate) => Promise<R>
+    (update: ResourceBroadcast<R> | RevalidationUpdate) => Promise<R>
   >();
 
   callbackRef.current = async (
-    update: ResourceUpdate<R> | RevalidationUpdate
+    update: ResourceBroadcast<R> | RevalidationUpdate
   ) => {
     const mutateOptions = { sendRequest: false, revalidate: false };
     switch (update.action) {
@@ -57,9 +59,20 @@ function useRealtimeResource<R extends Identifiable>(
     }
   };
   useEffect(() => {
-    const uuid = takeTicket();
-    websocket.subscribe(subscribeRequest, callbackRef, uuid).then();
-    return () => websocket.unsubscribe(uuid);
+    const request_id = takeTicket();
+    websocket
+      .subscribe(
+        {
+          action: "retrieve",
+          view_kwargs: {},
+          query_params: {},
+          ...subscribeRequest
+        },
+        callbackRef,
+        request_id
+      )
+      .then();
+    return () => websocket.unsubscribe(request_id);
   }, []);
 
   return { isConnected, ...response };

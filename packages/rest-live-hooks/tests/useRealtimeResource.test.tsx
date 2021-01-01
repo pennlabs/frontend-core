@@ -11,12 +11,13 @@ import { cache } from "swr";
 // @ts-ignore
 import useRealtimeResource from "../src/useRealtimeResource";
 // @ts-ignore
-import { Action, ResourceUpdate } from "../src/types";
+import { Action, ResourceBroadcast } from "../src/types";
 // @ts-ignore
 import { WebsocketProvider, WSContext } from "../src/Websocket";
 
 let ws: WS;
 
+const REQUEST_ID = 1337;
 const WS_HOST = "ws://localhost:3000";
 const MODEL = "todolist.Task";
 interface Elem {
@@ -41,12 +42,16 @@ jest.mock("../src/findOrigin", () => ({
   SITE_ORIGIN: () => WS_HOST,
 }));
 
+jest.mock("../src/takeTicket", () => ({
+  takeTicket: () => REQUEST_ID,
+}));
+
 describe("useRealtimeResource", () => {
   test("should connect to websocket", async () => {
     const Page = () => {
       const { data } = useRealtimeResource(
         "/items/1/",
-        { model: MODEL, value: 1 },
+        { model: MODEL, lookup_by: 1 },
         { fetcher }
       );
       return <div>message: {data && data.message}</div>;
@@ -61,8 +66,13 @@ describe("useRealtimeResource", () => {
     await ws.connected;
     await expect(ws).toReceiveMessage(
       JSON.stringify({
+        type: "subscribe",
+        id: REQUEST_ID,
+        action: "retrieve",
+        view_kwargs: {},
+        query_params: {},
         model: MODEL,
-        value: 1,
+        lookup_by: 1,
       })
     );
     expect(container.firstChild.textContent).toBe("message: hi");
@@ -74,7 +84,7 @@ describe("useRealtimeResource", () => {
         "/items/1/",
         {
           model: MODEL,
-          value: 1,
+          lookup_by: 1,
         },
         { fetcher }
       );
@@ -95,8 +105,13 @@ describe("useRealtimeResource", () => {
     await ws.connected;
     await expect(ws).toReceiveMessage(
       JSON.stringify({
+        type: "subscribe",
+        id: REQUEST_ID,
+        action: "retrieve",
+        view_kwargs: {},
+        query_params: {},
         model: MODEL,
-        value: 1,
+        lookup_by: 1,
       })
     );
 
@@ -104,9 +119,8 @@ describe("useRealtimeResource", () => {
 
     await expect(ws).toReceiveMessage(
       JSON.stringify({
-        model: MODEL,
-        value: 1,
-        unsubscribe: true,
+        type: "unsubscribe",
+        id: REQUEST_ID,
       })
     );
   });
@@ -117,7 +131,7 @@ describe("useRealtimeResource", () => {
         "/items/1/",
         {
           model: MODEL,
-          value: 1,
+          lookup_by: 1,
         },
         { fetcher }
       );
@@ -132,8 +146,13 @@ describe("useRealtimeResource", () => {
     await ws.connected;
     await expect(ws).toReceiveMessage(
       JSON.stringify({
+        type: "subscribe",
+        id: REQUEST_ID,
+        action: "retrieve",
+        view_kwargs: {},
+        query_params: {},
         model: MODEL,
-        value: 1,
+        lookup_by: 1,
       })
     );
     unmount();
@@ -145,7 +164,7 @@ describe("useRealtimeResource", () => {
     const Page = () => {
       const { data } = useRealtimeResource(
         "/items/2/",
-        { model: MODEL, value: 1 },
+        { model: MODEL, lookup_by: 1 },
         { fetcher }
       );
       return <div>message: {data && data.message}</div>;
@@ -156,14 +175,15 @@ describe("useRealtimeResource", () => {
       </WebsocketProvider>
     );
     await ws.connected; // test will time out if connection fails.
-    const update: ResourceUpdate<Elem> = {
+    const update: ResourceBroadcast<Elem> = {
+      type: "broadcast",
+      id: REQUEST_ID,
       model: MODEL,
       action: Action.UPDATED,
       instance: {
         id: 1,
         message: "hello",
       },
-      group_key_value: 1,
     };
     act(() => {
       ws.send(JSON.stringify(update));
@@ -182,7 +202,7 @@ describe("useRealtimeResource", () => {
       const { isConnected } = useContext(WSContext);
       const { data } = useRealtimeResource(
         "/items/1/",
-        { model: MODEL, value: 1 },
+        { model: MODEL, lookup_by: 1 },
         { fetcher: stateFetcher }
       );
       return (
@@ -207,8 +227,13 @@ describe("useRealtimeResource", () => {
     await ws.connected;
     await expect(ws).toReceiveMessage(
       JSON.stringify({
+        type: "subscribe",
+        id: REQUEST_ID,
+        action: "retrieve",
+        view_kwargs: {},
+        query_params: {},
         model: MODEL,
-        value: 1,
+        lookup_by: 1,
       })
     );
     expect(container.firstChild.firstChild.textContent).toBe("message: hi0");
@@ -221,8 +246,13 @@ describe("useRealtimeResource", () => {
 
     await expect(ws).toReceiveMessage(
       JSON.stringify({
+        type: "subscribe",
+        id: REQUEST_ID,
+        action: "retrieve",
+        view_kwargs: {},
+        query_params: {},
         model: MODEL,
-        value: 1,
+        lookup_by: 1,
       })
     );
     expect(container.firstChild.firstChild.textContent).toBe("message: hi1");
