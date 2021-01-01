@@ -18,7 +18,7 @@
     "swr": "^0.3.1"
   },
   "dependencies": {
-    "@pennlabs/rest-hooks": "^0.1.6",
+    "@pennlabs/rest-hooks": "^0.1.7",
     "reconnecting-websocket": "^4.4.0"
   },
   "devDependencies": {
