@@ -80,6 +80,8 @@ describe("useRealtimeResourceList", () => {
         type: "subscribe",
         id: REQUEST_ID,
         action: "list",
+        view_kwargs: {},
+        query_params: {},
         model: MODEL,
       } as SubscribeRequest)
     );
@@ -115,6 +117,8 @@ describe("useRealtimeResourceList", () => {
         type: "subscribe",
         id: REQUEST_ID,
         action: "list",
+        view_kwargs: {},
+        query_params: {},
         model: MODEL,
       } as SubscribeRequest)
     );
@@ -152,6 +156,8 @@ describe("useRealtimeResourceList", () => {
         type: "subscribe",
         id: REQUEST_ID,
         action: "list",
+        view_kwargs: {},
+        query_params: {},
         model: MODEL,
       } as SubscribeRequest)
     );
@@ -346,6 +352,8 @@ describe("useRealtimeResourceList", () => {
         type: "subscribe",
         id: REQUEST_ID,
         action: "list",
+        view_kwargs: {},
+        query_params: {},
         model: MODEL,
       } as SubscribeRequest)
     );
@@ -366,11 +374,45 @@ describe("useRealtimeResourceList", () => {
         type: "subscribe",
         id: REQUEST_ID,
         action: "list",
+        view_kwargs: {},
+        query_params: {},
         model: MODEL,
       } as SubscribeRequest)
     );
     expect(container.firstChild.firstChild.textContent).toBe(
       "message: bye earth"
     );
+  });
+
+  test("should pass along view_kwargs and query_params", async () => {
+    const num = 1;
+    const Page = () => {
+      const { data } = useRealtimeResourceList(
+        `/items-${num}/`,
+        (id) => `/items-${num}/${id}/`,
+        { model: MODEL, view_kwargs: { item: 1 }, query_params: { all: true } },
+        { fetcher }
+      );
+      return <div>message: {data && data.map((e) => e.message).join(" ")}</div>;
+    };
+    const { container } = render(
+      <WebsocketProvider url="/api/ws/subscribe/">
+        <Page />
+      </WebsocketProvider>
+    );
+    expect(container.firstChild.textContent).toBe("message: ");
+    await waitForDomChange({ container });
+    await ws.connected;
+    await expect(ws).toReceiveMessage(
+      JSON.stringify({
+        type: "subscribe",
+        id: REQUEST_ID,
+        action: "list",
+        view_kwargs: { item: 1 },
+        query_params: { all: true },
+        model: MODEL,
+      } as SubscribeRequest)
+    );
+    expect(container.firstChild.textContent).toBe("message: hello world");
   });
 });

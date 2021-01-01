@@ -10,6 +10,8 @@ export enum Action {
 export interface SubscribeRequest {
   model: string;
   action?: "retrieve" | "list";
+  view_kwargs?: { [key: string]: any };
+  query_params?: { [key: string]: any };
 }
 
 export interface RealtimeRetrieveRequestProps<

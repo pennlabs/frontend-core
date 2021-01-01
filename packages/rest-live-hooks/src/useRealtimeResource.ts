@@ -62,7 +62,12 @@ function useRealtimeResource<R extends Identifiable>(
     const request_id = takeTicket();
     websocket
       .subscribe(
-        { action: "retrieve", ...subscribeRequest },
+        {
+          action: "retrieve",
+          view_kwargs: {},
+          query_params: {},
+          ...subscribeRequest
+        },
         callbackRef,
         request_id
       )

@@ -69,6 +69,8 @@ describe("useRealtimeResource", () => {
         type: "subscribe",
         id: REQUEST_ID,
         action: "retrieve",
+        view_kwargs: {},
+        query_params: {},
         model: MODEL,
         lookup_by: 1,
       })
@@ -106,6 +108,8 @@ describe("useRealtimeResource", () => {
         type: "subscribe",
         id: REQUEST_ID,
         action: "retrieve",
+        view_kwargs: {},
+        query_params: {},
         model: MODEL,
         lookup_by: 1,
       })
@@ -145,6 +149,8 @@ describe("useRealtimeResource", () => {
         type: "subscribe",
         id: REQUEST_ID,
         action: "retrieve",
+        view_kwargs: {},
+        query_params: {},
         model: MODEL,
         lookup_by: 1,
       })
@@ -224,6 +230,8 @@ describe("useRealtimeResource", () => {
         type: "subscribe",
         id: REQUEST_ID,
         action: "retrieve",
+        view_kwargs: {},
+        query_params: {},
         model: MODEL,
         lookup_by: 1,
       })
@@ -241,6 +249,8 @@ describe("useRealtimeResource", () => {
         type: "subscribe",
         id: REQUEST_ID,
         action: "retrieve",
+        view_kwargs: {},
+        query_params: {},
         model: MODEL,
         lookup_by: 1,
       })

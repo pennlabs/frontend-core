@@ -77,7 +77,12 @@ function useRealtimeResourceList<R extends Identifiable, K extends keyof R>(
     const request_id = takeTicket();
     websocket
       .subscribe(
-        { action: "list", ...subscribeRequest },
+        {
+          action: "list",
+          view_kwargs: {},
+          query_params: {},
+          ...subscribeRequest
+        },
         callbackRef,
         request_id
       )
