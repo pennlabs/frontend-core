@@ -16,6 +16,6 @@
     "packages/*"
   ],
   "dependencies": {
-    "react": "^16.13.1"
+    "swr": "^0.3.11"
   }
 }

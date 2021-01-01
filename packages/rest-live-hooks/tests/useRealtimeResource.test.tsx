@@ -188,6 +188,7 @@ describe("useRealtimeResource", () => {
     act(() => {
       ws.send(JSON.stringify(update));
     });
+    await waitForDomChange({ container });
     expect(container.firstChild.textContent).toBe("message: hello");
   });
 
