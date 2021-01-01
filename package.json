@@ -16,6 +16,6 @@
     "packages/*"
   ],
   "dependencies": {
-    "swr": "^0.3.11"
+    "swr": "^0.3.1"
   }
 }
