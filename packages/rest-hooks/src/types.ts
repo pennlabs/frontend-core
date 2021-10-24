@@ -4,6 +4,15 @@ export interface Identifiable {
   id: Identifier;
 }
 
+export type Response<T, E> = 
+| { success: true, data: T }
+| { success: false, err: E }
+
+export type requestOptions = {
+  method: string;
+  revalidate?: boolean;
+}
+
 export type mutateResourceOptions = {
   method?: string;
   sendRequest?: boolean;

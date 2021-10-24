@@ -1,14 +1,25 @@
 import useSWR, { ConfigInterface } from "swr";
-import { mutateResourceOptions, useResourceResponse } from "./types";
+import { requestOptions, mutateResourceOptions, useResourceResponse } from "./types";
 import { doApiRequest } from "./fetching";
 
 function useResource<R>(
   url: string,
   config?: ConfigInterface<R>
 ): useResourceResponse<R> {
+
+  // call SWR
   const { data, error, isValidating, mutate } = useSWR(url, {
     ...config,
   });
+
+  // any type of request
+  const request = async (
+    options: requestOptions
+  ) => {
+    // TODO
+  }
+
+  // generic mutate function
   const mutateWithAPI = async (
     patchedResource?: Partial<R>,
     options: mutateResourceOptions = {}
@@ -28,6 +39,7 @@ function useResource<R>(
     if (revalidate) return mutate();
     else return new Promise<R>(() => {});
   };
+
   return { data, error, isValidating, mutate: mutateWithAPI };
 }
 
