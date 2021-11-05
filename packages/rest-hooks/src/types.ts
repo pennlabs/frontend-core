@@ -10,8 +10,14 @@ export type Response<T, E> =
 
 export type requestOptions = {
   method: string;
+  sendRequest?: boolean;
   revalidate?: boolean;
 }
+
+export type requestFunction<T, E> = (
+  options: requestOptions,
+  requestContent?: Partial<T>,
+) => Promise<Response<T, E>>;
 
 export type mutateResourceOptions = {
   method?: string;
@@ -19,6 +25,7 @@ export type mutateResourceOptions = {
   revalidate?: boolean;
 };
 
+// TODO: should this extend requestFunction?
 export type mutateResourceFunction<T> = (
   patchedResource?: Partial<T>,
   options?: mutateResourceOptions
@@ -43,6 +50,7 @@ export type useResourceResponse<T> = {
   error: any;
   isValidating: boolean;
   mutate: mutateResourceFunction<T>;
+  request: requestFunction<T>
 };
 
 export type useResourceListResponse<T extends Identifiable> = {
