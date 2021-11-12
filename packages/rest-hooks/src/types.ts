@@ -8,6 +8,13 @@ export type MutateResponse<T, E> =
 | { success: true, data: T }
 | { success: false, error: E }
 
+/**
+ * Options for a useResource mutate function
+ * 
+ * @property {boolean=true} sendRequest  - Whether or not to send the request
+ * @property {boolean=true} optimistic   - Enables locally changing the data before revalidating
+ * @property {boolean=true} revalidate   - Should we revalidate our data after updating?
+ */
 export type mutateOptions = {
   sendRequest?: boolean;
   optimistic?: boolean;
