@@ -4,32 +4,20 @@ export interface Identifiable {
   id: Identifier;
 }
 
-export type Response<T, E> = 
+export type MutateResponse<T, E> = 
 | { success: true, data: T }
-| { success: false, err: E }
+| { success: false, error: E }
 
-export type requestOptions = {
-  method: string;
+export type mutateOptions = {
   sendRequest?: boolean;
+  optimistic?: boolean;
   revalidate?: boolean;
 }
 
-export type requestFunction<T, E> = (
-  options: requestOptions,
+export type mutateFunction<T, E> = (
+  options: mutateOptions,
   requestContent?: Partial<T>,
-) => Promise<Response<T, E>>;
-
-export type mutateResourceOptions = {
-  method?: string;
-  sendRequest?: boolean;
-  revalidate?: boolean;
-};
-
-// TODO: should this extend requestFunction?
-export type mutateResourceFunction<T> = (
-  patchedResource?: Partial<T>,
-  options?: mutateResourceOptions
-) => Promise<T | undefined>;
+) => Promise<MutateResponse<T, E>>;
 
 export type mutateResourceListOptions<T> = {
   method?: string;
@@ -45,12 +33,11 @@ export type mutateResourceListFunction<T extends Identifiable> = (
   options?: mutateResourceListOptions<T>
 ) => Promise<T[] | undefined>;
 
-export type useResourceResponse<T> = {
-  data: T | undefined;
-  error: any;
+export type useResourceResponse<T, E> = {
+  data?: T;
+  error?: E;
   isValidating: boolean;
-  mutate: mutateResourceFunction<T>;
-  request: requestFunction<T>
+  mutate: mutateFunction<T, E>;
 };
 
 export type useResourceListResponse<T extends Identifiable> = {

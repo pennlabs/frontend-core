@@ -1,64 +1,55 @@
 import useSWR, { ConfigInterface } from "swr";
-import { requestOptions, mutateResourceOptions, useResourceResponse } from "./types";
+import { mutateFunction, mutateOptions, useResourceResponse } from "./types";
 import { doApiRequest } from "./fetching";
 
-// TODO: i don't want to add another generic type in here for errors.. where does it come from...?
-function useResource<R>(
+function useResource<T, E>(
   url: string,
-  config?: ConfigInterface<R>
-): useResourceResponse<R> {
+  config?: ConfigInterface<T>
+): useResourceResponse<T, E> {
 
   // call SWR
   const { data, error, isValidating, mutate } = useSWR(url, {
     ...config,
   });
 
-  // any type of request
-  const request = async<R, E> (
-    options: requestOptions,
-    requestContent?: Partial<R>,
-    // TODO: schema?
+  // for patch requests
+  const mutateWithAPI : mutateFunction<T, E> = async (
+    options: mutateOptions,
+    newData?: Partial<T>,
   ) => {
-    // TODO: should we be using PATCH?
-    const { method = "PATCH", sendRequest = true, revalidate = true } = options;
+    const {
+      sendRequest = true,
+      optimistic = true,
+      revalidate = true
+    } = options;
 
-    if (requestContent && data) {
-      mutate({ ...data, ...requestContent }, false);
-    }
-    if (sendRequest) {
-      await doApiRequest(url, {
-        method,
-        body: requestContent,
-      });
+    // local stuff we'll send back if not reverifying
+    let updatedLocalData = data;
+
+    // mutate data locally (don't revalidate yet)
+    if (optimistic && newData && data) {
+      updatedLocalData = {...data, ...newData};
+      mutate(updatedLocalData, false);
     }
 
-    // TODO: make this more flexible... mabye make user provide some type info??
-    if (revalidate) return mutate();
-    else return new Promise<R>(() => {});
+    try {
+      if (sendRequest) {
+        await doApiRequest(url, {
+          method: "PATCH",
+          body: newData,
+        });
+      }
+
+      if (revalidate) return {success: true, data: await mutate()};
+      
+      return {success: true, data: updatedLocalData}
+
+    } catch (e) {
+      return {success: false, error: e as E}
+    }
   }
 
-  // generic mutate function
-  const mutateWithAPI = async (
-    patchedResource?: Partial<R>,
-    options: mutateResourceOptions = {}
-  ) => {
-    const { method = "PATCH", sendRequest = true, revalidate = true } = options;
-
-    if (patchedResource && data) {
-      mutate({ ...data, ...patchedResource }, false);
-    }
-    if (sendRequest) {
-      await doApiRequest(url, {
-        method,
-        body: patchedResource,
-      });
-    }
-
-    if (revalidate) return mutate();
-    else return new Promise<R>(() => {});
-  };
-
-  return { data, error, isValidating, mutate: mutateWithAPI, request };
+  return { data, error, isValidating, mutate: mutateWithAPI };
 }
 
 export default useResource;
