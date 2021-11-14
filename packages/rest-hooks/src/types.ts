@@ -1,5 +1,8 @@
 export type Identifier = string | number;
 
+export type ListMutateMethod = 
+| "PATCH" | "POST" | "DELETE"
+
 export interface Identifiable {
   id: Identifier;
 }
@@ -26,19 +29,41 @@ export type mutateFunction<T, E> = (
   requestContent?: Partial<T>,
 ) => Promise<MutateResponse<T, E>>;
 
-export type mutateResourceListOptions<T> = {
-  method?: string;
+interface mutateListOptionsBase<T> {
   sendRequest?: boolean;
+  optimistic?: boolean;
   revalidate?: boolean;
-  append?: boolean;
   sortBy?: (a: T, b: T) => number;
-};
+}
 
-export type mutateResourceListFunction<T extends Identifiable> = (
-  id?: Identifier,
-  data?: Partial<T> | null,
-  options?: mutateResourceListOptions<T>
-) => Promise<T[] | undefined>;
+interface mutateListOptionsBaseUrl {
+  method: "POST";
+}
+
+interface mutateListOptionsIdUrl {
+  method: "PATCH" | "DELETE";
+  id: Identifier;
+}
+
+/**
+ * Options for a useResourceList mutate function
+ * 
+ * @property {boolean=true} sendRequest    - Whether or not to send an API request
+ * @property {boolean=true} optimistic     - Should we update local data before reverifying?
+ * @property {boolean=true} revalidate     - Revalidate after (possibly) updating local data
+ * @property {{@link ListMutateMethod}}    - Request method
+ * @property {{@link Identifier}} id       - ID of the data to PATCH or DELETE
+ */
+export type mutateListOptions<T> =
+  mutateListOptionsBase<T> & (mutateListOptionsBaseUrl | mutateListOptionsIdUrl);
+
+export type mutateListFunction<T extends Identifiable, E> = (
+  options: mutateListOptions<T>,
+  requestContent?: Partial<T> | null,
+) => Promise<MutateResponse<T[], E>>;
+
+
+// responses
 
 export type useResourceResponse<T, E> = {
   data?: T;
@@ -47,9 +72,9 @@ export type useResourceResponse<T, E> = {
   mutate: mutateFunction<T, E>;
 };
 
-export type useResourceListResponse<T extends Identifiable> = {
+export type useResourceListResponse<T extends Identifiable, E> = {
   data: T[] | undefined;
   error: any;
   isValidating: boolean;
-  mutate: mutateResourceListFunction<T>;
+  mutate: mutateListFunction<T, E>;
 };

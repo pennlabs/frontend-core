@@ -1,53 +1,82 @@
 import {
   Identifiable,
   Identifier,
-  mutateResourceListOptions,
+  mutateListOptions,
+  mutateListFunction,
   useResourceListResponse,
 } from "./types";
 import useSWR, { ConfigInterface } from "swr";
 import { patchInList } from "./utils";
 import { doApiRequest } from "./fetching";
 
-function useResourceList<R extends Identifiable>(
+function useResourceList<T extends Identifiable, E>(
   listUrl: string | (() => string),
   getResourceUrl: (id: Identifier) => string,
-  config?: ConfigInterface<R[]>
-): useResourceListResponse<R> {
+  config?: ConfigInterface<T[]>
+): useResourceListResponse<T, E> {
   const { data, error, isValidating, mutate } = useSWR(listUrl, config);
-  const mutateWithAPI = async (
-    id?: Identifier,
-    patchedResource?: Partial<R> | null,
-    options: mutateResourceListOptions<R> = {}
+
+  // mutate function (for patch + post requests)
+  const mutateWithAPI: mutateListFunction<T, E> = async (
+    options: mutateListOptions<T>,
+    requestContent?: Partial<T>,
   ) => {
+
     const {
-      method = "PATCH",
+      method,
       sendRequest = true,
+      optimistic = true,
       revalidate = true,
-      append = false,
       sortBy = (a, b) => 0,
     } = options;
+
+    // will be true if match found in list
     let didPatch: boolean = false;
-    // if ID is undefined/null, don't patch.
-    if (id && data) {
-      let patchedList: R[];
-      [patchedList, didPatch] = patchInList(data, id, patchedResource);
-      if (didPatch) {
-        mutate(patchedList.sort(sortBy), false);
-      } else if (append) {
-        const newList = [patchedResource as R, ...data];
-        mutate(newList.sort(sortBy), false);
+    let localList = data;
+
+    // if ID is undefined/null, don't patch. this is just local mutation.
+    if (data && optimistic) {
+      if (method === "POST") {
+        localList = [requestContent as T, ...data].sort(sortBy);
+      } else if (method === "DELETE") {
+        let patchedList: T[];
+        [patchedList, didPatch = false] = patchInList(data, options.id, null);
+      } else {
+        let patchedList: T[];
+        [patchedList, didPatch = false] = patchInList(data, options.id, requestContent);
+        if (didPatch) {
+          localList = patchedList.sort(sortBy);
+        }
       }
+
+      // mutate our local data
+      mutate(localList, false);
     }
-    // Only perform an API request when the patch finds a matching entry.
-    if (!append && sendRequest && didPatch) {
-      await doApiRequest(getResourceUrl(id), {
-        method,
-        body: patchedResource,
-      });
+
+    try {
+      // Only perform an API request when the patch finds a matching entry.
+      // need to update this so POST requests use original resource path
+      if (sendRequest && didPatch) {
+        const apiPath = (method === "POST")
+          // TODO: make sure this actually works
+          ? (listUrl instanceof Function ? listUrl() : listUrl)
+          : getResourceUrl(id);
+        await doApiRequest(apiPath, {
+          method,
+          body: requestContent,
+        });
+      }
+
+      if (revalidate) return {success: true, data: await mutate()};
+
+      else return {success: true, data: localList}
+    } catch (e) {
+      // on some error, return our non-success pattern
+      return {success: false, error: e as E}
     }
-    if (revalidate) return mutate();
-    else return new Promise<R[]>(() => {});
   };
+
+
   return { data, error, isValidating, mutate: mutateWithAPI };
 }
 
