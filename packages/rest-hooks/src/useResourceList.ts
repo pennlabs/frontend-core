@@ -60,7 +60,7 @@ function useResourceList<T extends Identifiable, E>(
         const apiPath = (method === "POST")
           // TODO: make sure this actually works
           ? (listUrl instanceof Function ? listUrl() : listUrl)
-          : getResourceUrl(id);
+          : getResourceUrl(options.id);
         await doApiRequest(apiPath, {
           method,
           body: requestContent,
