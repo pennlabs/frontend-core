@@ -2,7 +2,7 @@ import useSWR, { ConfigInterface } from "swr";
 import { mutateFunction, mutateOptions, useResourceResponse } from "./types";
 import { doApiRequest } from "./fetching";
 
-function useResource<T, E>(
+function useResource<T, E> (
   url: string,
   config?: ConfigInterface<T>
 ): useResourceResponse<T, E> {
@@ -14,8 +14,8 @@ function useResource<T, E>(
 
   // for patch requests
   const mutateWithAPI : mutateFunction<T, E> = async (
-    options: mutateOptions,
     newData?: Partial<T>,
+    options: mutateOptions = {},
   ) => {
     const {
       sendRequest = true,

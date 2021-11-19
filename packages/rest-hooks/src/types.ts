@@ -25,8 +25,8 @@ export type mutateOptions = {
 }
 
 export type mutateFunction<T, E> = (
-  options: mutateOptions,
   requestContent?: Partial<T>,
+  options?: mutateOptions,
 ) => Promise<MutateResponse<T, E>>;
 
 interface mutateListOptionsBase<T> {
@@ -45,6 +45,8 @@ interface mutateListOptionsIdUrl {
   id: Identifier;
 }
 
+type mutateListOptionsMethod = mutateListOptionsBaseUrl | mutateListOptionsIdUrl
+
 /**
  * Options for a useResourceList mutate function
  * 
@@ -55,11 +57,11 @@ interface mutateListOptionsIdUrl {
  * @property {{@link Identifier}} id       - ID of the data to PATCH or DELETE
  */
 export type mutateListOptions<T> =
-  mutateListOptionsBase<T> & (mutateListOptionsBaseUrl | mutateListOptionsIdUrl);
+  mutateListOptionsBase<T> & mutateListOptionsMethod;
 
 export type mutateListFunction<T extends Identifiable, E> = (
-  options: mutateListOptions<T>,
   requestContent?: Partial<T> | null,
+  options?: mutateListOptions<T>,
 ) => Promise<MutateResponse<T[], E>>;
 
 

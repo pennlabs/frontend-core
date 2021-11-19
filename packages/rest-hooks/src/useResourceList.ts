@@ -18,8 +18,8 @@ function useResourceList<T extends Identifiable, E>(
 
   // mutate function (for patch + post requests)
   const mutateWithAPI: mutateListFunction<T, E> = async (
-    options: mutateListOptions<T>,
     requestContent?: Partial<T>,
+    options: mutateListOptions<T> = {} as mutateListOptions<T>,
   ) => {
 
     const {
