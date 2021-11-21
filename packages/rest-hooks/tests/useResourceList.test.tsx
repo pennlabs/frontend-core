@@ -121,8 +121,8 @@ describe("useResourceList", () => {
         <div
           onClick={() =>
             mutate(
-              { id: 3, message: "Why," },
-              { sendRequest: false, revalidate: false, method: "PATCH", id: 3 }
+              { id: 0, message: "Why," },
+              { sendRequest: false, revalidate: false, method: "POST" }
             )
           }
         >
@@ -157,8 +157,7 @@ describe("useResourceList", () => {
               {
                 sendRequest: false,
                 revalidate: false,
-                method: "PATCH",
-                id: 3,
+                method: "POST",
                 sortBy: (a, b) => a.id - b.id,
               }
             )

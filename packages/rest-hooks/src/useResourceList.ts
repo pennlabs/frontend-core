@@ -36,12 +36,18 @@ function useResourceList<T extends Identifiable, E>(
 
     // if ID is undefined/null, don't patch. this is just local mutation.
     if (data && optimistic) {
-      if (method === "POST") {
+      if (options.method === "POST") {
+        // we add our data and sort if it's a POST
         localList = [requestContent as T, ...data].sort(sortBy);
-      } else if (method === "DELETE") {
+      } else if (options.method === "DELETE") {
+        // delete our data from list if DELETE
         let patchedList: T[];
         [patchedList, didPatch = false] = patchInList(data, options.id, null);
+        if (didPatch) {
+          localList = patchedList.sort(sortBy);
+        }
       } else {
+        // normal PATCH request
         let patchedList: T[];
         [patchedList, didPatch = false] = patchInList(data, options.id, requestContent);
         if (didPatch) {
@@ -57,7 +63,7 @@ function useResourceList<T extends Identifiable, E>(
       // Only perform an API request when the patch finds a matching entry.
       // need to update this so POST requests use original resource path
       if (sendRequest && didPatch) {
-        const apiPath = (method === "POST")
+        const apiPath = (options.method === "POST")
           // TODO: make sure this actually works
           ? (listUrl instanceof Function ? listUrl() : listUrl)
           : getResourceUrl(options.id);
