@@ -14,12 +14,13 @@ import {
 } from "./types";
 import { WSContext } from "./Websocket";
 import { takeTicket } from "./takeTicket";
+import { MutateResponse } from "@pennlabs/rest-hooks/dist/types";
 
-interface useRealtimeResourceResponse<R> extends useResourceResponse<R> {
+interface useRealtimeResourceResponse<R, E extends any = any> extends useResourceResponse<R, E> {
   isConnected: boolean;
 }
 
-function useRealtimeResource<R extends Identifiable>(
+function useRealtimeResource<R extends Identifiable, E extends any = any>(
   url: string,
   subscribeRequest: RealtimeRetrieveRequestProps<R>,
   config?: ConfigInterface<R>
@@ -37,7 +38,7 @@ function useRealtimeResource<R extends Identifiable>(
   const response = useResource(url, config);
   const { mutate } = response;
   const callbackRef = useRef<
-    (update: ResourceBroadcast<R> | RevalidationUpdate) => Promise<R>
+    (update: ResourceBroadcast<R> | RevalidationUpdate) => Promise<MutateResponse<R, E>>
   >();
 
   callbackRef.current = async (
