@@ -15,6 +15,7 @@ import {
 } from "./types";
 import { Identifiable } from "@pennlabs/rest-hooks";
 import { SITE_ORIGIN } from "./findOrigin";
+import { MutateResponse } from "@pennlabs/rest-hooks/dist/types";
 
 export type WSContextProps = {
   websocket: WebsocketManager;
@@ -123,10 +124,10 @@ class WebsocketManager {
     this.websocket?.close();
   }
 
-  async subscribe<T extends Identifiable>(
+  async subscribe<T extends Identifiable, E extends any = any>(
     request: Required<SubscribeRequest>,
     notify: MutableRefObject<
-      (update: ResourceBroadcast<T> | RevalidationUpdate) => Promise<T[] | T>
+      (update: ResourceBroadcast<T> | RevalidationUpdate) => Promise<MutateResponse<T | T[], E>>
     >,
     request_id: number
   ) {

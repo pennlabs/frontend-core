@@ -59,7 +59,7 @@ describe("useResourceList", () => {
       );
       return (
         <div
-          onClick={() => mutate(1, { message: "HELLO" }, { revalidate: false })}
+          onClick={() => mutate({ message: "HELLO" }, { revalidate: false, id: 1, method: "PATCH" })}
         >
           message: {data && data.map((e) => e.message).join(" ")}
         </div>
@@ -86,7 +86,7 @@ describe("useResourceList", () => {
       return (
         <div
           onClick={() =>
-            mutate(2, null, { method: "DELETE", revalidate: false })
+            mutate(null, { method: "DELETE", revalidate: false, id: 2 })
           }
         >
           message: {data && data.map((e) => e.message).join(" ")}
@@ -121,9 +121,8 @@ describe("useResourceList", () => {
         <div
           onClick={() =>
             mutate(
-              3,
-              { id: 3, message: "Why," },
-              { sendRequest: false, revalidate: false, append: true }
+              { id: 0, message: "Why," },
+              { sendRequest: false, revalidate: false, method: "POST" }
             )
           }
         >
@@ -154,12 +153,11 @@ describe("useResourceList", () => {
         <div
           onClick={() =>
             mutate(
-              3,
               { id: 3, message: "third" },
               {
                 sendRequest: false,
                 revalidate: false,
-                append: true,
+                method: "POST",
                 sortBy: (a, b) => a.id - b.id,
               }
             )
@@ -217,9 +215,8 @@ describe("useResourceList", () => {
         <div
           onClick={() =>
             mutate(
-              1,
               { id: 1, message: "Yo" },
-              { sendRequest: false, revalidate: false, append: true }
+              { sendRequest: false, revalidate: false, method: "PATCH", id: 1 }
             )
           }
         >

@@ -5,3 +5,4 @@ dist
 tsconfig.tsbuildinfo
 yarn-error.log
 coverage/
+**/.vscode
