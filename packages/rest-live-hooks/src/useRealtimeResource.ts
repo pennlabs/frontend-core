@@ -2,7 +2,7 @@ import {
   Identifiable,
   Identifier,
   useResource,
-  useResourceResponse
+  useResourceResponse,
 } from "@pennlabs/rest-hooks";
 import { ConfigInterface } from "swr";
 import { useEffect, useRef, useContext } from "react";
@@ -10,13 +10,14 @@ import {
   Action,
   ResourceBroadcast,
   RevalidationUpdate,
-  RealtimeRetrieveRequestProps
+  RealtimeRetrieveRequestProps,
 } from "./types";
 import { WSContext } from "./Websocket";
 import { takeTicket } from "./takeTicket";
 import { MutateResponse } from "@pennlabs/rest-hooks/dist/types";
 
-interface useRealtimeResourceResponse<R, E extends any = any> extends useResourceResponse<R, E> {
+interface useRealtimeResourceResponse<R, E extends any = any>
+  extends useResourceResponse<R, E> {
   isConnected: boolean;
 }
 
@@ -38,7 +39,9 @@ function useRealtimeResource<R extends Identifiable, E extends any = any>(
   const response = useResource(url, config);
   const { mutate } = response;
   const callbackRef = useRef<
-    (update: ResourceBroadcast<R> | RevalidationUpdate) => Promise<MutateResponse<R, E>>
+    (
+      update: ResourceBroadcast<R> | RevalidationUpdate
+    ) => Promise<MutateResponse<R, E>>
   >();
 
   callbackRef.current = async (
@@ -67,7 +70,7 @@ function useRealtimeResource<R extends Identifiable, E extends any = any>(
           action: "retrieve",
           view_kwargs: {},
           query_params: {},
-          ...subscribeRequest
+          ...subscribeRequest,
         },
         callbackRef,
         request_id

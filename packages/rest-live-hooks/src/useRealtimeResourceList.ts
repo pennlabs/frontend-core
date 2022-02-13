@@ -2,7 +2,7 @@ import {
   Identifiable,
   Identifier,
   useResourceList,
-  useResourceListResponse
+  useResourceListResponse,
 } from "@pennlabs/rest-hooks";
 import { ConfigInterface } from "swr";
 import { useEffect, useRef, useContext } from "react";
@@ -10,7 +10,7 @@ import {
   Action,
   ResourceBroadcast,
   RealtimeListRequestProps,
-  RevalidationUpdate
+  RevalidationUpdate,
 } from "./types";
 import { WSContext } from "./Websocket";
 import { takeTicket } from "./takeTicket";
@@ -21,7 +21,11 @@ interface useRealtimeResourceListResponse<R extends Identifiable, E>
   isConnected: boolean;
 }
 
-function useRealtimeResourceList<R extends Identifiable, K extends keyof R, E extends Object>(
+function useRealtimeResourceList<
+  R extends Identifiable,
+  K extends keyof R,
+  E extends Object
+>(
   listUrl: string | (() => string),
   getResourceUrl: (id: Identifier) => string,
   subscribeRequest: RealtimeListRequestProps,
@@ -45,7 +49,9 @@ function useRealtimeResourceList<R extends Identifiable, K extends keyof R, E ex
   const response = useResourceList<R, E>(listUrl, getResourceUrl, config);
   const { mutate } = response;
   const callbackRef = useRef<
-    (update: ResourceBroadcast<R> | RevalidationUpdate) => Promise<MutateResponse<R[], E>>
+    (
+      update: ResourceBroadcast<R> | RevalidationUpdate
+    ) => Promise<MutateResponse<R[], E>>
   >();
 
   callbackRef.current = async (
@@ -57,14 +63,14 @@ function useRealtimeResourceList<R extends Identifiable, K extends keyof R, E ex
           method: "POST",
           sendRequest: false,
           revalidate: false,
-          sortBy: orderBy
-        })
+          sortBy: orderBy,
+        });
       case Action.UPDATED:
         return mutate(update.instance, {
           method: "PATCH",
           id: update.instance.id,
           sendRequest: false,
-          revalidate: false
+          revalidate: false,
         });
       case Action.DELETED:
         return mutate(null, {
@@ -87,7 +93,7 @@ function useRealtimeResourceList<R extends Identifiable, K extends keyof R, E ex
           action: "list",
           view_kwargs: {},
           query_params: {},
-          ...subscribeRequest
+          ...subscribeRequest,
         },
         callbackRef,
         request_id

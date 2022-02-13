@@ -19,9 +19,8 @@ function useResourceList<T extends Identifiable, E>(
   // mutate function (for patch + post requests)
   const mutateWithAPI: mutateListFunction<T, E> = async (
     requestContent?: Partial<T>,
-    options: mutateListOptions<T> = {} as mutateListOptions<T>,
+    options: mutateListOptions<T> = {} as mutateListOptions<T>
   ) => {
-
     const {
       method,
       sendRequest = true,
@@ -49,7 +48,11 @@ function useResourceList<T extends Identifiable, E>(
       } else {
         // normal PATCH request
         let patchedList: T[];
-        [patchedList, didPatch = false] = patchInList(data, options.id, requestContent);
+        [patchedList, didPatch = false] = patchInList(
+          data,
+          options.id,
+          requestContent
+        );
         if (didPatch) {
           localList = patchedList.sort(sortBy);
         }
@@ -63,25 +66,26 @@ function useResourceList<T extends Identifiable, E>(
       // Only perform an API request when the patch finds a matching entry.
       // need to update this so POST requests use original resource path
       if (sendRequest && didPatch) {
-        const apiPath = (options.method === "POST")
-          // TODO: make sure this actually works
-          ? (listUrl instanceof Function ? listUrl() : listUrl)
-          : getResourceUrl(options.id);
+        const apiPath =
+          options.method === "POST"
+            ? // TODO: make sure this actually works
+              listUrl instanceof Function
+              ? listUrl()
+              : listUrl
+            : getResourceUrl(options.id);
         await doApiRequest(apiPath, {
           method,
           body: requestContent,
         });
       }
 
-      if (revalidate) return {success: true, data: await mutate()};
-
-      else return {success: true, data: localList}
+      if (revalidate) return { success: true, data: await mutate() };
+      else return { success: true, data: localList };
     } catch (e) {
       // on some error, return our non-success pattern
-      return {success: false, error: e as E}
+      return { success: false, error: e as E };
     }
   };
-
 
   return { data, error, isValidating, mutate: mutateWithAPI };
 }
