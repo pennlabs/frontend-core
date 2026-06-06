@@ -4,7 +4,7 @@ import { MutableRefObject } from "react";
 export enum Action {
   CREATED = "CREATED",
   UPDATED = "UPDATED",
-  DELETED = "DELETED"
+  DELETED = "DELETED",
 }
 
 export interface SubscribeRequest {

@@ -1,33 +1,52 @@
 import useSWR, { ConfigInterface } from "swr";
-import { mutateResourceOptions, useResourceResponse } from "./types";
+import { mutateFunction, mutateOptions, useResourceResponse } from "./types";
 import { doApiRequest } from "./fetching";
 
-function useResource<R>(
+function useResource<T, E>(
   url: string,
-  config?: ConfigInterface<R>
-): useResourceResponse<R> {
+  config?: ConfigInterface<T>
+): useResourceResponse<T, E> {
+  // call SWR
   const { data, error, isValidating, mutate } = useSWR(url, {
     ...config,
   });
-  const mutateWithAPI = async (
-    patchedResource?: Partial<R>,
-    options: mutateResourceOptions = {}
+
+  // for patch requests
+  const mutateWithAPI: mutateFunction<T, E> = async (
+    newData?: Partial<T>,
+    options: mutateOptions = {}
   ) => {
-    const { method = "PATCH", sendRequest = true, revalidate = true } = options;
+    const {
+      sendRequest = true,
+      optimistic = true,
+      revalidate = true,
+    } = options;
 
-    if (patchedResource && data) {
-      mutate({ ...data, ...patchedResource }, false);
-    }
-    if (sendRequest) {
-      await doApiRequest(url, {
-        method,
-        body: patchedResource,
-      });
+    // local stuff we'll send back if not reverifying
+    let updatedLocalData = data;
+
+    // mutate data locally (don't revalidate yet)
+    if (optimistic && newData && data) {
+      updatedLocalData = { ...data, ...newData };
+      mutate(updatedLocalData, false);
     }
 
-    if (revalidate) return mutate();
-    else return new Promise<R>(() => {});
+    try {
+      if (sendRequest) {
+        await doApiRequest(url, {
+          method: "PATCH",
+          body: newData,
+        });
+      }
+
+      if (revalidate) return { success: true, data: await mutate() };
+
+      return { success: true, data: updatedLocalData };
+    } catch (e) {
+      return { success: false, error: e as E };
+    }
   };
+
   return { data, error, isValidating, mutate: mutateWithAPI };
 }
 
